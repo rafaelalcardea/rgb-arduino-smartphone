@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Teste RGB + Arduino — Smartphone e Fotodiodo v2</title>
+<title>Teste RGB + Arduino — Smartphone e Fotodiodo v3</title>
 <style>
   :root{--bg:#f6f7f9;--card:#fff;--txt:#1f2937;--mut:#6b7280;--line:#d1d5db;--accent:#2563eb;--ok:#0f766e;--warn:#b45309;}
   *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif;font-size:14px}
@@ -21,8 +21,8 @@
 </head>
 <body>
 <header>
-  <h1>Teste RGB + Arduino — smartphone como câmera e fotodiodo pela Serial v2</h1>
-  <p>O Arduino continua com a leitura do fotodiodo como está; esta tela apenas lê a porta serial, calcula G/B pela imagem e mostra tudo junto.</p>
+  <h1>Teste RGB + Arduino — smartphone como câmera e fotodiodo pela Serial v3</h1>
+  <p>O Arduino continua com a leitura do fotodiodo como está; esta tela lê a porta serial, calcula G/B pela imagem, mostra os máximos e também alinha o perfil RGB aos tempos do fotodiodo.</p>
 </header>
 <main>
 <section>
@@ -83,6 +83,7 @@
     <button id="btnCopyTable">Copiar tabela</button>
     <button id="btnCSV">Baixar CSV opcional</button>
   </div>
+  <div class="hint">Os máximos de G e B são calculados a partir de todos os frames RGB amostrados. A tabela temporal abaixo é apenas um alinhamento com os tempos impressos pelo fotodiodo.</div>
   <table id="resultsTable">
     <thead>
       <tr>
@@ -93,6 +94,29 @@
         <th>Máx. G</th>
         <th>Tempo máx. B (s)</th>
         <th>Máx. B</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section style="grid-column:1 / -1">
+  <h2>Perfil temporal alinhado aos tempos do fotodiodo</h2>
+  <div class="row">
+    <button id="btnCopyTemporal">Copiar perfil temporal</button>
+    <button id="btnTemporalCSV">Baixar CSV temporal</button>
+    <span class="hint">Para cada tempo impresso pelo Arduino, são exibidos G e B do ponto RGB mais próximo.</span>
+  </div>
+  <table id="temporalTable">
+    <thead>
+      <tr>
+        <th>Replicata</th>
+        <th>Tempo fotodiodo (s)</th>
+        <th>Fotodiodo</th>
+        <th>Tempo RGB mais próximo (s)</th>
+        <th>G</th>
+        <th>B</th>
+        <th>Δt RGB−fotodiodo (s)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -126,6 +150,9 @@ let serialPort = null;
 let serialReader = null;
 let serialKeepReading = false;
 let serialBuffer = '';
+let alignedRows = [];
+let finalMaxListMode = false;
+let finalMaxListIndex = 1;
 
 function fmt(v,d=2){return (v===null||v===undefined||Number.isNaN(v))?'—':Number(v).toFixed(d).replace('.',',')}
 function fmtDot(v,d=4){return (v===null||v===undefined||Number.isNaN(v))?'':Number(v).toFixed(d)}
@@ -227,9 +254,11 @@ function getRGBMean(){
   return n?{R:rs/n,G:gs/n,B:bs/n,n}:null;
 }
 function newCurrent(rep){
-  current = {rep:rep, startMs:performance.now(), gMax:null,gTime:null,bMax:null,bTime:null, pdMax:null,pdTime:null};
+  current = {rep:rep, startMs:performance.now(), gMax:null,gTime:null,bMax:null,bTime:null, pdMax:null,pdTime:null, rgbSeries:[], pdSeries:[], alignedPoints:[]};
   currentRep = rep;
   setText('repStatus', rep);
+  setText('gMax','—');
+  setText('bMax','—');
   log(`--- Replicata ${rep} iniciada ---`);
 }
 function finalizeCurrent(){
@@ -244,6 +273,8 @@ function sampleRGB(){
   const m=getRGBMean();
   if(!m) return;
   const t=(performance.now()-current.startMs)/1000;
+  const point = {t, R:m.R, G:m.G, B:m.B, n:m.n};
+  current.rgbSeries.push(point);
   setText('gNow',fmt(m.G,3)); setText('bNow',fmt(m.B,3));
   if(current.gMax===null || m.G>current.gMax){current.gMax=m.G; current.gTime=t; setText('gMax',`${fmt(m.G,3)} / ${fmt(t,2)} s`)}
   if(current.bMax===null || m.B>current.bMax){current.bMax=m.B; current.bTime=t; setText('bMax',`${fmt(m.B,3)} / ${fmt(t,2)} s`)}
@@ -265,26 +296,68 @@ document.getElementById('btnStartRun').onclick=startRun;
 document.getElementById('btnStopRun').onclick=stopRun;
 document.getElementById('btnNewRep').onclick=()=>{finalizeCurrent(); newCurrent(results.length+1); if(!runActive) startRun();};
 document.getElementById('btnFinalizeRep').onclick=()=>{finalizeCurrent(); current=null; setText('repStatus','—');};
-document.getElementById('btnClear').onclick=()=>{results=[]; current=null; currentRep=null; renderResults(); setText('repStatus','—'); setText('gMax','—'); setText('bMax','—'); setText('gNow','—'); setText('bNow','—'); document.getElementById('log').textContent='';};
+document.getElementById('btnClear').onclick=()=>{results=[]; current=null; currentRep=null; renderResults(); setText('repStatus','—'); setText('gMax','—'); setText('bMax','—'); setText('gNow','—'); setText('bNow','—'); document.getElementById('log').textContent=''; alignedRows=[]; finalMaxListMode=false; finalMaxListIndex=1; renderTemporal();};
 
+function nearestRGBPoint(repObj, tPd){
+  if(!repObj || !repObj.rgbSeries || repObj.rgbSeries.length===0) return null;
+  let best = repObj.rgbSeries[0];
+  let bestDt = Math.abs(best.t - tPd);
+  for(const p of repObj.rgbSeries){
+    const dt = Math.abs(p.t - tPd);
+    if(dt < bestDt){best = p; bestDt = dt;}
+  }
+  return {...best, delta: best.t - tPd};
+}
+function addAlignedPoint(repObj, tPd, pd){
+  if(!repObj) return;
+  const rgb = nearestRGBPoint(repObj, tPd);
+  const row = {rep:repObj.rep, tPd, pd, tRgb:rgb?rgb.t:null, G:rgb?rgb.G:null, B:rgb?rgb.B:null, delta:rgb?rgb.delta:null};
+  repObj.pdSeries.push({t:tPd, value:pd});
+  repObj.alignedPoints.push(row);
+  alignedRows.push(row);
+  renderTemporal();
+}
+function ensureRep(rep){
+  let r = results.find(x=>x.rep===rep);
+  if(!r){
+    r = {rep:rep, startMs:null, gMax:null,gTime:null,bMax:null,bTime:null,pdMax:null,pdTime:null,rgbSeries:[],pdSeries:[],alignedPoints:[]};
+    results.push(r);
+  }
+  return r;
+}
 function parseSerialLine(line){
   const trimmed=line.trim();
   if(!trimmed) return;
   log(trimmed);
+
+  if(finalMaxListMode && /^[-+]?[0-9]+(?:[\.,][0-9]+)?$/.test(trimmed)){
+    const v = Number(trimmed.replace(',','.'));
+    const repObj = ensureRep(finalMaxListIndex);
+    repObj.pdMax = v;
+    finalMaxListIndex++;
+    renderResults();
+    return;
+  }
+
   let m = trimmed.match(/Replicata\s*=\s*(\d+)/i);
   if(m){
-    if(current) finalizeCurrent();
-    newCurrent(Number(m[1]));
+    finalMaxListMode = false;
+    const rep = Number(m[1]);
+    if(current && current.rep !== rep) finalizeCurrent();
+    if(!current || current.rep !== rep) newCurrent(rep);
     if(!runActive && stream && roi.x!==null) startRun();
     return;
   }
+
   m = trimmed.match(/^([0-9]+(?:[\.,][0-9]+)?)\s*:\s*([0-9]+(?:[\.,][0-9]+)?)/);
   if(m && current){
     const t = Number(m[1].replace(',','.'));
     const v = Number(m[2].replace(',','.'));
     if(current.pdMax===null || v>current.pdMax){current.pdMax=v; current.pdTime=t;}
+    addAlignedPoint(current, t, v);
     return;
   }
+
   m = trimmed.match(/Maximo\s*=\s*([0-9]+(?:[\.,][0-9]+)?)/i);
   if(m && current){
     const v = Number(m[1].replace(',','.'));
@@ -292,8 +365,13 @@ function parseSerialLine(line){
     finalizeCurrent();
     return;
   }
+
   if(/Valores maximos/i.test(trimmed)){
+    finalMaxListMode = true;
+    finalMaxListIndex = 1;
     finalizeCurrent();
+    renderResults();
+    return;
   }
 }
 async function connectSerial(){
@@ -344,11 +422,34 @@ function tableText(){
   results.sort((a,b)=>a.rep-b.rep).forEach(r=>lines.push([r.rep,fmtDot(r.pdTime,2),fmtDot(r.pdMax,2),fmtDot(r.gTime,2),fmtDot(r.gMax,3),fmtDot(r.bTime,2),fmtDot(r.bMax,3)].join('\t')));
   return lines.join('\n');
 }
+function renderTemporal(){
+  const tb=document.querySelector('#temporalTable tbody');
+  if(!tb) return;
+  tb.innerHTML='';
+  const rows = alignedRows.slice(-250);
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>Rep ${r.rep}</td><td>${fmt(r.tPd,2)}</td><td>${fmt(r.pd,2)}</td><td>${fmt(r.tRgb,2)}</td><td>${fmt(r.G,3)}</td><td>${fmt(r.B,3)}</td><td>${fmt(r.delta,3)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function temporalText(){
+  const header=['Replicata','Tempo_fotodiodo_s','Fotodiodo','Tempo_RGB_mais_proximo_s','G','B','Delta_t_RGB_menos_fotodiodo_s'];
+  const lines=[header.join('\t')];
+  alignedRows.forEach(r=>lines.push([r.rep,fmtDot(r.tPd,2),fmtDot(r.pd,2),fmtDot(r.tRgb,2),fmtDot(r.G,3),fmtDot(r.B,3),fmtDot(r.delta,3)].join('\t')));
+  return lines.join('\n');
+}
 document.getElementById('btnCopyTable').onclick=async()=>{await navigator.clipboard.writeText(tableText()); alert('Tabela copiada.');};
 document.getElementById('btnCSV').onclick=()=>{
   const csv = tableText().replaceAll('\t',';');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='resultados_rgb_fotodiodo.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById('btnCopyTemporal').onclick=async()=>{await navigator.clipboard.writeText(temporalText()); alert('Perfil temporal copiado.');};
+document.getElementById('btnTemporalCSV').onclick=()=>{
+  const csv = temporalText().replaceAll('\t',';');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='perfil_temporal_rgb_fotodiodo.csv'; a.click(); URL.revokeObjectURL(a.href);
 };
 window.addEventListener('resize', drawOverlay);
 video.addEventListener('loadedmetadata', updateOverlaySize);
