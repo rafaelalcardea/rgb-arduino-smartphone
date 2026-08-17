@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Teste RGB + Arduino — Smartphone e Fotodiodo v2</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--txt:#1f2937;--mut:#6b7280;--line:#d1d5db;--accent:#2563eb;--ok:#0f766e;--warn:#b45309;}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif;font-size:14px}
+  header{background:#111827;color:#fff;padding:14px 18px} header h1{font-size:18px;margin:0 0 4px} header p{margin:0;color:#d1d5db}
+  main{padding:16px;display:grid;grid-template-columns: minmax(520px, 1.35fr) minmax(360px, .9fr);gap:14px;align-items:start}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  h2{font-size:16px;margin:0 0 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:7px 0}.row label{font-weight:bold}
+  button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font-weight:bold}button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}button.good{background:var(--ok);color:#fff;border-color:var(--ok)}button.warn{background:var(--warn);color:#fff;border-color:var(--warn)}button:disabled{opacity:.45;cursor:not-allowed}
+  input,select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;max-width:100%}.small{width:86px}.medium{width:140px}.hint{color:var(--mut);font-size:12px;line-height:1.35}
+  .videoWrap{position:relative;background:#000;border-radius:10px;overflow:hidden;display:inline-block;max-width:100%}video,canvas.overlay{display:block;max-width:100%;height:auto}.overlay{position:absolute;inset:0;cursor:crosshair}.status{font-weight:bold}.ok{color:var(--ok)}.bad{color:#b91c1c}.muted{color:var(--mut)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{border:1px solid var(--line);border-radius:8px;padding:9px;background:#fafafa}.metric .label{color:var(--mut);font-size:12px}.metric .value{font-size:20px;font-weight:bold;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}th,td{border:1px solid var(--line);padding:5px;text-align:center}th{background:#eef2ff}td.left{text-align:left}.log{height:180px;overflow:auto;background:#0b1020;color:#d1e7ff;border-radius:8px;padding:8px;font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;background:#f9fafb}
+  @media(max-width:950px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Teste RGB + Arduino — smartphone como câmera e fotodiodo pela Serial v2</h1>
+  <p>O Arduino continua com a leitura do fotodiodo como está; esta tela apenas lê a porta serial, calcula G/B pela imagem e mostra tudo junto.</p>
+</header>
+<main>
+<section>
+  <h2>1. Câmera / ROI</h2>
+  <div class="row">
+    <label>Câmera:</label>
+    <select id="cameraSelect"></select>
+    <button id="btnListCameras">Listar câmeras</button>
+    <button id="btnStartCamera" class="primary">Abrir câmera</button>
+    <button id="btnStopCamera">Parar câmera</button>
+  </div>
+  <div class="row">
+    <label>Diâmetro ROI (px):</label><input id="roiDiameter" class="small" type="number" value="120" min="5" step="1">
+    <button id="btnLockROI" class="warn" type="button">Travar ROI</button>
+    <label>Intervalo RGB (s):</label><input id="sampleInterval" class="small" type="number" value="0.1" min="0.01" step="0.01">
+    <span class="hint">Clique/arraste na imagem para posicionar a ROI. Depois de travar, o centro fica fixo; o diâmetro ainda pode ser alterado pelo campo numérico.</span>
+  </div>
+  <div class="videoWrap">
+    <video id="video" autoplay muted playsinline width="800"></video>
+    <canvas id="overlay" class="overlay"></canvas>
+  </div>
+  <canvas id="workCanvas" style="display:none"></canvas>
+  <div class="row hint">
+    ROI atual: <span id="roiInfo" class="pill">não definida</span>
+    Câmera: <span id="camStatus" class="pill">desconectada</span>
+  </div>
+</section>
+
+<section>
+  <h2>2. Arduino / Serial</h2>
+  <div class="row">
+    <button id="btnConnectSerial" class="primary">Conectar Arduino</button>
+    <button id="btnDisconnectSerial">Desconectar</button>
+    <span id="serialStatus" class="status bad">Serial desconectada</span>
+  </div>
+  <div class="hint">Use Chrome ou Edge. Se esta página estiver conectada à Serial, o Monitor Serial da IDE normalmente não poderá ficar aberto ao mesmo tempo.</div>
+  <h2 style="margin-top:12px">3. Aquisição RGB</h2>
+  <div class="row">
+    <button id="btnStartRun" class="good">Iniciar registro RGB</button>
+    <button id="btnStopRun" class="warn">Parar registro RGB</button>
+    <button id="btnNewRep">Nova replicata manual</button>
+    <button id="btnFinalizeRep">Finalizar replicata</button>
+    <button id="btnClear">Limpar resultados</button>
+  </div>
+  <div class="hint">Se a Serial estiver conectada, a replicata muda automaticamente quando aparecer “Replicata = n” vindo do Arduino. O botão “Nova replicata manual” serve para testar sem Serial.</div>
+  <div class="grid2" style="margin-top:10px">
+    <div class="metric"><div class="label">G atual</div><div id="gNow" class="value">—</div></div>
+    <div class="metric"><div class="label">B atual</div><div id="bNow" class="value">—</div></div>
+    <div class="metric"><div class="label">Máximo G / tempo</div><div id="gMax" class="value">—</div></div>
+    <div class="metric"><div class="label">Máximo B / tempo</div><div id="bMax" class="value">—</div></div>
+  </div>
+  <div class="row hint">Status: <span id="runStatus" class="pill">parado</span> | Replicata atual: <span id="repStatus" class="pill">—</span></div>
+</section>
+
+<section style="grid-column:1 / -1">
+  <h2>Resultados finais por replicata</h2>
+  <div class="row">
+    <button id="btnCopyTable">Copiar tabela</button>
+    <button id="btnCSV">Baixar CSV opcional</button>
+  </div>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Replicata</th>
+        <th>Tempo máx. fotodiodo (s)</th>
+        <th>Máx. fotodiodo</th>
+        <th>Tempo máx. G (s)</th>
+        <th>Máx. G</th>
+        <th>Tempo máx. B (s)</th>
+        <th>Máx. B</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section style="grid-column:1 / -1">
+  <h2>Log da Serial / corrida</h2>
+  <div id="log" class="log"></div>
+</section>
+</main>
+
+<script>
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const octx = overlay.getContext('2d');
+const workCanvas = document.getElementById('workCanvas');
+const wctx = workCanvas.getContext('2d', { willReadFrequently: true });
+const cameraSelect = document.getElementById('cameraSelect');
+let stream = null;
+let roi = {x:null,y:null,r:60};
+let roiLocked = false;
+let dragging = false;
+let rgbTimer = null;
+let runActive = false;
+let runStart = 0;
+let currentRep = null;
+let results = [];
+let current = null;
+let serialPort = null;
+let serialReader = null;
+let serialKeepReading = false;
+let serialBuffer = '';
+
+function fmt(v,d=2){return (v===null||v===undefined||Number.isNaN(v))?'—':Number(v).toFixed(d).replace('.',',')}
+function fmtDot(v,d=4){return (v===null||v===undefined||Number.isNaN(v))?'':Number(v).toFixed(d)}
+function log(msg){const el=document.getElementById('log'); el.textContent += msg + '\n'; el.scrollTop = el.scrollHeight;}
+function setText(id, txt){document.getElementById(id).textContent = txt;}
+function setROIInfo(){setText('roiInfo', roi.x===null?'não definida':`x=${Math.round(roi.x)}, y=${Math.round(roi.y)}, d=${Math.round(roi.r*2)} px, ${roiLocked?'travada':'destravada'}`)}
+function updateOverlaySize(){
+  const rect = video.getBoundingClientRect();
+  overlay.width = video.videoWidth || rect.width || 800;
+  overlay.height = video.videoHeight || rect.height || 450;
+  drawOverlay();
+}
+function drawOverlay(){
+  octx.clearRect(0,0,overlay.width,overlay.height);
+  if(roi.x!==null){
+    octx.beginPath(); octx.arc(roi.x, roi.y, roi.r, 0, Math.PI*2);
+    octx.lineWidth = 3; octx.strokeStyle = '#00ff80'; octx.stroke();
+    octx.beginPath(); octx.arc(roi.x, roi.y, 3, 0, Math.PI*2); octx.fillStyle = '#00ff80'; octx.fill();
+  }
+}
+function canvasPoint(ev){
+  const rect = overlay.getBoundingClientRect();
+  const x = (ev.clientX - rect.left) * (overlay.width / rect.width);
+  const y = (ev.clientY - rect.top) * (overlay.height / rect.height);
+  return {x,y};
+}
+overlay.addEventListener('mousedown', ev=>{
+  if(roiLocked) return;
+  dragging=true; const p=canvasPoint(ev); roi.x=p.x; roi.y=p.y; drawOverlay(); setROIInfo();
+});
+overlay.addEventListener('mousemove', ev=>{
+  if(!dragging || roiLocked) return;
+  const p=canvasPoint(ev); roi.x=p.x; roi.y=p.y; drawOverlay(); setROIInfo();
+});
+window.addEventListener('mouseup', ()=>{dragging=false;});
+document.getElementById('roiDiameter').addEventListener('input', e=>{
+  roi.r=Math.max(2, Number(e.target.value)/2);
+  drawOverlay(); setROIInfo();
+});
+document.getElementById('btnLockROI').addEventListener('click', ()=>{
+  if(roi.x===null){alert('Selecione a ROI antes de travar.'); return;}
+  roiLocked = !roiLocked; dragging=false;
+  const btn=document.getElementById('btnLockROI');
+  btn.textContent = roiLocked ? 'Destravar ROI' : 'Travar ROI';
+  btn.className = roiLocked ? 'good' : 'warn';
+  overlay.style.cursor = roiLocked ? 'not-allowed' : 'crosshair';
+  drawOverlay(); setROIInfo();
+  log(roiLocked ? 'ROI travada. O centro ficará fixo; o diâmetro ainda pode ser alterado.' : 'ROI destravada. Clique/arraste para reposicionar.');
+});
+
+async function listCameras(){
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  cameraSelect.innerHTML='';
+  devices.filter(d=>d.kind==='videoinput').forEach((d,i)=>{
+    const opt=document.createElement('option'); opt.value=d.deviceId; opt.textContent=d.label || `Câmera ${i+1}`; cameraSelect.appendChild(opt);
+  });
+}
+async function startCamera(){
+  try{
+    if(stream) stopCamera();
+    const deviceId = cameraSelect.value;
+    const constraints = { video: deviceId ? {deviceId:{exact:deviceId}, width:{ideal:1280}, height:{ideal:720}, frameRate:{ideal:30}} : {width:{ideal:1280}, height:{ideal:720}, frameRate:{ideal:30}}, audio:false };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await video.play();
+    await listCameras();
+    setText('camStatus','conectada'); document.getElementById('camStatus').className='pill ok';
+    setTimeout(updateOverlaySize, 300);
+    log('Câmera aberta. Selecione a ROI na imagem; depois use Travar ROI se quiser fixar o centro.');
+  }catch(err){alert('Erro ao abrir câmera: '+err.message); log('Erro câmera: '+err.message);}
+}
+function stopCamera(){
+  if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null;}
+  setText('camStatus','desconectada'); document.getElementById('camStatus').className='pill';
+}
+document.getElementById('btnListCameras').onclick=listCameras;
+document.getElementById('btnStartCamera').onclick=startCamera;
+document.getElementById('btnStopCamera').onclick=stopCamera;
+if(navigator.mediaDevices) listCameras().catch(()=>{});
+
+function getRGBMean(){
+  if(!video.videoWidth || roi.x===null) return null;
+  workCanvas.width = video.videoWidth; workCanvas.height = video.videoHeight;
+  wctx.drawImage(video,0,0,workCanvas.width,workCanvas.height);
+  const x0=Math.max(0, Math.floor(roi.x-roi.r)), y0=Math.max(0, Math.floor(roi.y-roi.r));
+  const x1=Math.min(workCanvas.width-1, Math.ceil(roi.x+roi.r)), y1=Math.min(workCanvas.height-1, Math.ceil(roi.y+roi.r));
+  const img=wctx.getImageData(x0,y0,x1-x0+1,y1-y0+1).data;
+  let rs=0,gs=0,bs=0,n=0;
+  const width=x1-x0+1;
+  for(let yy=y0; yy<=y1; yy++){
+    for(let xx=x0; xx<=x1; xx++){
+      const dx=xx-roi.x, dy=yy-roi.y;
+      if(dx*dx+dy*dy<=roi.r*roi.r){
+        const idx=((yy-y0)*width + (xx-x0))*4;
+        rs += img[idx]; gs += img[idx+1]; bs += img[idx+2]; n++;
+      }
+    }
+  }
+  return n?{R:rs/n,G:gs/n,B:bs/n,n}:null;
+}
+function newCurrent(rep){
+  current = {rep:rep, startMs:performance.now(), gMax:null,gTime:null,bMax:null,bTime:null, pdMax:null,pdTime:null};
+  currentRep = rep;
+  setText('repStatus', rep);
+  log(`--- Replicata ${rep} iniciada ---`);
+}
+function finalizeCurrent(){
+  if(!current) return;
+  const idx = results.findIndex(r=>r.rep===current.rep);
+  if(idx>=0) results[idx]=current; else results.push(current);
+  log(`Rep${current.rep} | Fotodiodo: ${fmt(current.pdMax,2)} (${fmt(current.pdTime,2)} s) | G: ${fmt(current.gMax,3)} (${fmt(current.gTime,2)} s) | B: ${fmt(current.bMax,3)} (${fmt(current.bTime,2)} s)`);
+  renderResults();
+}
+function sampleRGB(){
+  if(!runActive || !current) return;
+  const m=getRGBMean();
+  if(!m) return;
+  const t=(performance.now()-current.startMs)/1000;
+  setText('gNow',fmt(m.G,3)); setText('bNow',fmt(m.B,3));
+  if(current.gMax===null || m.G>current.gMax){current.gMax=m.G; current.gTime=t; setText('gMax',`${fmt(m.G,3)} / ${fmt(t,2)} s`)}
+  if(current.bMax===null || m.B>current.bMax){current.bMax=m.B; current.bTime=t; setText('bMax',`${fmt(m.B,3)} / ${fmt(t,2)} s`)}
+}
+function startRun(){
+  if(!stream){alert('Abra a câmera antes.'); return;}
+  if(roi.x===null){alert('Selecione a ROI antes.'); return;}
+  runActive=true; runStart=performance.now(); setText('runStatus','registrando');
+  if(!current) newCurrent(results.length+1);
+  clearInterval(rgbTimer);
+  const intervalMs=Math.max(10, Number(document.getElementById('sampleInterval').value)*1000 || 100);
+  rgbTimer=setInterval(sampleRGB, intervalMs);
+  log(`Registro RGB iniciado. Intervalo: ${(intervalMs/1000).toFixed(3)} s`);
+}
+function stopRun(){
+  runActive=false; clearInterval(rgbTimer); rgbTimer=null; setText('runStatus','parado'); finalizeCurrent();
+}
+document.getElementById('btnStartRun').onclick=startRun;
+document.getElementById('btnStopRun').onclick=stopRun;
+document.getElementById('btnNewRep').onclick=()=>{finalizeCurrent(); newCurrent(results.length+1); if(!runActive) startRun();};
+document.getElementById('btnFinalizeRep').onclick=()=>{finalizeCurrent(); current=null; setText('repStatus','—');};
+document.getElementById('btnClear').onclick=()=>{results=[]; current=null; currentRep=null; renderResults(); setText('repStatus','—'); setText('gMax','—'); setText('bMax','—'); setText('gNow','—'); setText('bNow','—'); document.getElementById('log').textContent='';};
+
+function parseSerialLine(line){
+  const trimmed=line.trim();
+  if(!trimmed) return;
+  log(trimmed);
+  let m = trimmed.match(/Replicata\s*=\s*(\d+)/i);
+  if(m){
+    if(current) finalizeCurrent();
+    newCurrent(Number(m[1]));
+    if(!runActive && stream && roi.x!==null) startRun();
+    return;
+  }
+  m = trimmed.match(/^([0-9]+(?:[\.,][0-9]+)?)\s*:\s*([0-9]+(?:[\.,][0-9]+)?)/);
+  if(m && current){
+    const t = Number(m[1].replace(',','.'));
+    const v = Number(m[2].replace(',','.'));
+    if(current.pdMax===null || v>current.pdMax){current.pdMax=v; current.pdTime=t;}
+    return;
+  }
+  m = trimmed.match(/Maximo\s*=\s*([0-9]+(?:[\.,][0-9]+)?)/i);
+  if(m && current){
+    const v = Number(m[1].replace(',','.'));
+    current.pdMax = v;
+    finalizeCurrent();
+    return;
+  }
+  if(/Valores maximos/i.test(trimmed)){
+    finalizeCurrent();
+  }
+}
+async function connectSerial(){
+  if(!('serial' in navigator)){alert('Web Serial não está disponível. Use Chrome ou Edge em https ou localhost.'); return;}
+  try{
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 9600 });
+    document.getElementById('serialStatus').textContent='Serial conectada'; document.getElementById('serialStatus').className='status ok';
+    log('Serial conectada em 9600 baud.');
+    serialKeepReading=true;
+    const decoder = new TextDecoderStream();
+    serialPort.readable.pipeTo(decoder.writable).catch(()=>{});
+    serialReader = decoder.readable.getReader();
+    while(serialKeepReading){
+      const {value, done}=await serialReader.read();
+      if(done) break;
+      if(value){
+        serialBuffer += value;
+        const lines = serialBuffer.split(/\r?\n/);
+        serialBuffer = lines.pop();
+        lines.forEach(parseSerialLine);
+      }
+    }
+  }catch(err){alert('Erro na Serial: '+err.message); log('Erro Serial: '+err.message);}
+}
+async function disconnectSerial(){
+  try{
+    serialKeepReading=false;
+    if(serialReader){await serialReader.cancel(); serialReader.releaseLock(); serialReader=null;}
+    if(serialPort){await serialPort.close(); serialPort=null;}
+  }catch(e){}
+  document.getElementById('serialStatus').textContent='Serial desconectada'; document.getElementById('serialStatus').className='status bad';
+}
+document.getElementById('btnConnectSerial').onclick=connectSerial;
+document.getElementById('btnDisconnectSerial').onclick=disconnectSerial;
+
+function renderResults(){
+  const tb=document.querySelector('#resultsTable tbody'); tb.innerHTML='';
+  results.sort((a,b)=>a.rep-b.rep).forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>Rep ${r.rep}</td><td>${fmt(r.pdTime,2)}</td><td>${fmt(r.pdMax,2)}</td><td>${fmt(r.gTime,2)}</td><td>${fmt(r.gMax,3)}</td><td>${fmt(r.bTime,2)}</td><td>${fmt(r.bMax,3)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function tableText(){
+  const header=['Replicata','Tempo_max_fotodiodo_s','Max_fotodiodo','Tempo_max_G_s','Max_G','Tempo_max_B_s','Max_B'];
+  const lines=[header.join('\t')];
+  results.sort((a,b)=>a.rep-b.rep).forEach(r=>lines.push([r.rep,fmtDot(r.pdTime,2),fmtDot(r.pdMax,2),fmtDot(r.gTime,2),fmtDot(r.gMax,3),fmtDot(r.bTime,2),fmtDot(r.bMax,3)].join('\t')));
+  return lines.join('\n');
+}
+document.getElementById('btnCopyTable').onclick=async()=>{await navigator.clipboard.writeText(tableText()); alert('Tabela copiada.');};
+document.getElementById('btnCSV').onclick=()=>{
+  const csv = tableText().replaceAll('\t',';');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='resultados_rgb_fotodiodo.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+window.addEventListener('resize', drawOverlay);
+video.addEventListener('loadedmetadata', updateOverlaySize);
+</script>
+</body>
+</html>
