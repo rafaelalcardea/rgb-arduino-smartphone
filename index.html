@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — corrida única, vídeo e reprocessamento v9</h1>
-  <p>Versão v9: intervalo RGB/reprocessamento vinculado; ao carregar outro vídeo, o ROI de reprocessamento permanece no mesmo local e só muda se você quiser.</p>
+  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11</h1>
+  <p>Versão v11: comandos Arduino; START inicia RGB + vídeo + Arduino; mostra dimensões do vídeo e posição relativa do ROI.</p>
 </header>
 
 <main>
@@ -251,6 +251,9 @@
       <span id="serialInfo" class="pill">Serial desconectado</span>
       <span id="recordInfo" class="pill">Vídeo não gravando</span>
       <span id="intervalInfo" class="pill ok">Intervalo RGB/reproc: 0,1 s</span>
+      <span id="liveDimInfo" class="pill">Ao vivo: -- × -- px</span>
+      <span id="reDimInfo" class="pill">Vídeo carregado: -- × -- px</span>
+      <span id="roiRelInfo" class="pill">ROI reproc: --</span>
     </div>
   </section>
 
@@ -289,12 +292,12 @@
 
       <h3>Corrida RGB + gravação do vídeo</h3>
       <div class="row">
-        <button id="startRgbBtn" class="ok">Iniciar corrida (RGB + vídeo)</button>
+        <button id="startRgbBtn" class="ok">Iniciar somente RGB + vídeo</button>
         <button id="stopRgbBtn" class="warn">Parar corrida</button>
         <button id="downloadVideoBtn" class="secondary">Exportar último vídeo</button>
         <button id="clearLiveBtn" class="light">Limpar dados ao vivo</button>
       </div>
-      <p class="note">Ao iniciar a corrida, o app começa simultaneamente o registro RGB e a gravação do vídeo bruto. O fotodiodo permanece em painel separado apenas para acompanhamento.</p>
+      <p class="note">Este botão inicia apenas a aquisição do smartphone. Para acionar também o Arduino, use o botão START no painel Arduino.</p>
       <div id="liveStatus" class="status"></div>
     </div>
 
@@ -305,6 +308,15 @@
         <button id="disconnectSerialBtn" class="secondary">Desconectar</button>
         <button id="clearSerialBtn" class="light">Limpar serial</button>
       </div>
+
+      <h3>Comandos para o Arduino</h3>
+      <div class="row">
+        <button id="washReagentsBtn" class="secondary">Lavar reagentes</button>
+        <button id="washPathBtn" class="secondary">Lavar percurso</button>
+        <button id="startRunArduinoBtn" class="ok">START — iniciar corrida</button>
+      </div>
+      <p class="note">Os botões enviam comandos pela serial. Para funcionarem, o programa do Arduino precisa reconhecer os comandos: LAVA_REAGENTES, LAVA_PERCURSO e START. O botão START inicia primeiro o RGB + vídeo e, em seguida, envia START ao Arduino para reduzir o risco de perder o início do sinal.</p>
+
       <p class="note">O perfil do serial fica separado do RGB. Aqui aparecem apenas dados do fotodiodo lidos do Arduino.</p>
       <div class="tables">
         <div>
@@ -481,6 +493,21 @@ function setStatus(id, msg) {
   $(id).textContent = msg || '';
 }
 
+
+function videoDimensionText(video) {
+  if (!video || !video.videoWidth || !video.videoHeight) return '-- × -- px';
+  return `${video.videoWidth} × ${video.videoHeight} px`;
+}
+
+function roiRelativeText(video, roi) {
+  if (!video || !video.videoWidth || !video.videoHeight) return '--';
+  if (!Number.isFinite(roi.x) || !Number.isFinite(roi.y)) return '--';
+  const px = (roi.x / video.videoWidth) * 100;
+  const py = (roi.y / video.videoHeight) * 100;
+  const d = Number($('roiDiameter').value || 55);
+  return `x=${px.toFixed(1).replace('.', ',')}%; y=${py.toFixed(1).replace('.', ',')}%; d=${d}px`;
+}
+
 function updatePills() {
   const d = Number($('roiDiameter').value || 55);
   const roiText = liveRoi.locked ? `ROI ao vivo travado: x=${Math.round(liveRoi.x)}, y=${Math.round(liveRoi.y)}, d=${d}px` : 'ROI não travado';
@@ -495,6 +522,10 @@ function updatePills() {
 
   $('recordInfo').className = mediaRecorder && mediaRecorder.state === 'recording' ? 'pill ok' : 'pill';
   $('recordInfo').textContent = mediaRecorder && mediaRecorder.state === 'recording' ? 'Vídeo gravando' : 'Vídeo não gravando';
+
+  if ($('liveDimInfo')) $('liveDimInfo').textContent = `Ao vivo: ${videoDimensionText(liveVideo)}`;
+  if ($('reDimInfo')) $('reDimInfo').textContent = `Vídeo carregado: ${videoDimensionText(reprocessVideo)}`;
+  if ($('roiRelInfo')) $('roiRelInfo').textContent = `ROI reproc: ${roiRelativeText(reprocessVideo, reRoi)}`;
 
   updateIntervalUi();
 }
@@ -562,21 +593,41 @@ function drawRoi(video, canvas, roi) {
   ctx.fill();
 }
 
+function updateRoiRelative(video, roi) {
+  if (!video.videoWidth || !video.videoHeight) return;
+  if (Number.isFinite(roi.x) && Number.isFinite(roi.y)) {
+    roi.nx = roi.x / video.videoWidth;
+    roi.ny = roi.y / video.videoHeight;
+  }
+}
+
 function centerRoi(video, roi) {
   if (video.videoWidth && video.videoHeight) {
     roi.x = video.videoWidth / 2;
     roi.y = video.videoHeight / 2;
+    roi.nx = 0.5;
+    roi.ny = 0.5;
   }
 }
 
 function clampRoiToVideo(video, roi) {
   if (!video.videoWidth || !video.videoHeight) return;
+
+  // Se já existe posição relativa, ela é usada para manter o mesmo local
+  // quando um novo vídeo tiver resolução/dimensão diferente.
+  if (Number.isFinite(roi.nx) && Number.isFinite(roi.ny)) {
+    roi.x = roi.nx * video.videoWidth;
+    roi.y = roi.ny * video.videoHeight;
+  }
+
   if (!Number.isFinite(roi.x) || !Number.isFinite(roi.y) || (roi.x === 0 && roi.y === 0)) {
     centerRoi(video, roi);
     return;
   }
+
   roi.x = Math.max(0, Math.min(video.videoWidth, roi.x));
   roi.y = Math.max(0, Math.min(video.videoHeight, roi.y));
+  updateRoiRelative(video, roi);
 }
 
 function setupRoiInteraction(video, canvas, roi, afterMove) {
@@ -586,12 +637,13 @@ function setupRoiInteraction(video, canvas, roi, afterMove) {
     const p = displayToVideoCoords(video, ev.clientX, ev.clientY);
     roi.x = Math.max(0, Math.min(video.videoWidth, p.x));
     roi.y = Math.max(0, Math.min(video.videoHeight, p.y));
+    updateRoiRelative(video, roi);
     afterMove();
   });
 }
 
-setupRoiInteraction(liveVideo, liveOverlay, liveRoi, () => drawRoi(liveVideo, liveOverlay, liveRoi));
-setupRoiInteraction(reprocessVideo, reprocessOverlay, reRoi, () => drawRoi(reprocessVideo, reprocessOverlay, reRoi));
+setupRoiInteraction(liveVideo, liveOverlay, liveRoi, () => { drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); });
+setupRoiInteraction(reprocessVideo, reprocessOverlay, reRoi, () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updatePills(); });
 
 window.addEventListener('resize', () => {
   drawRoi(liveVideo, liveOverlay, liveRoi);
@@ -963,6 +1015,48 @@ function exportLiveCsv() {
   downloadText(csvLive(), filename);
 }
 
+
+async function sendSerialCommand(command) {
+  if (!serialPort || !serialPort.writable) {
+    setStatus('serialStatus', 'Conecte o Arduino antes de enviar comandos.');
+    return false;
+  }
+  try {
+    const writer = serialPort.writable.getWriter();
+    const encoder = new TextEncoder();
+    await writer.write(encoder.encode(command + '\\n'));
+    writer.releaseLock();
+    setStatus('serialStatus', `Comando enviado ao Arduino: ${command}`);
+    return true;
+  } catch (err) {
+    setStatus('serialStatus', 'Erro ao enviar comando ao Arduino: ' + err.message);
+    return false;
+  }
+}
+
+async function commandWashReagents() {
+  await sendSerialCommand('LAVA_REAGENTES');
+}
+
+async function commandWashPath() {
+  await sendSerialCommand('LAVA_PERCURSO');
+}
+
+async function commandStartRun() {
+  // Primeiro inicia o telefone; depois envia START ao Arduino.
+  const ok = startRgb();
+  if (!ok) return;
+
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+    startVideoRecording();
+  }
+
+  setStatus('liveStatus', 'RGB + vídeo iniciados. Enviando START ao Arduino...');
+  await new Promise(resolve => setTimeout(resolve, 200));
+  await sendSerialCommand('START');
+  setStatus('liveStatus', 'START acionado: RGB + vídeo em andamento e comando START enviado ao Arduino.');
+}
+
 async function connectSerial() {
   if (!('serial' in navigator)) {
     setStatus('serialStatus', 'Web Serial não está disponível. Use Chrome ou Edge.');
@@ -1115,7 +1209,8 @@ function loadVideoForReprocessing() {
       reRoi.locked = false;
     }
     drawRoi(reprocessVideo, reprocessOverlay, reRoi);
-    const lockTxt = reRoi.locked ? 'ROI mantido travado no mesmo local.' : 'ROI mantido no mesmo local.';
+    updatePills();
+    const lockTxt = reRoi.locked ? 'ROI mantido travado no mesmo local relativo.' : 'ROI mantido no mesmo local relativo.';
     setStatus('reStatus', `Vídeo carregado: ${f.name}. Duração: ${fmt(reprocessVideo.duration, 2)} s. ${lockTxt}`);
   };
 }
@@ -1188,6 +1283,10 @@ function csvRe() {
     ['tipo','reprocessamento_video_rgb'],
     ['nome', name],
     ['video', file],
+    ['video_width_px', reprocessVideo.videoWidth || ''],
+    ['video_height_px', reprocessVideo.videoHeight || ''],
+    ['roi_x_rel_percent', reprocessVideo.videoWidth ? fmtDot((reRoi.x / reprocessVideo.videoWidth) * 100, 3) : ''],
+    ['roi_y_rel_percent', reprocessVideo.videoHeight ? fmtDot((reRoi.y / reprocessVideo.videoHeight) * 100, 3) : ''],
     ['roi_x', fmtDot(reRoi.x, 3)],
     ['roi_y', fmtDot(reRoi.y, 3)],
     ['roi_diametro_px', $('roiDiameter').value],
@@ -1252,6 +1351,9 @@ $('calcLivePeaksBtn').onclick = calcLivePeaks;
 $('exportLiveCsvBtn').onclick = exportLiveCsv;
 
 $('connectSerialBtn').onclick = connectSerial;
+$('washReagentsBtn').onclick = commandWashReagents;
+$('washPathBtn').onclick = commandWashPath;
+$('startRunArduinoBtn').onclick = commandStartRun;
 $('disconnectSerialBtn').onclick = disconnectSerial;
 $('clearSerialBtn').onclick = clearSerialData;
 $('exportPdCsvBtn').onclick = exportPdCsv;
@@ -1260,16 +1362,16 @@ $('loadVideoBtn').onclick = loadVideoForReprocessing;
 $('rePlayPauseBtn').onclick = toggleRePlayPause;
 $('reSeek').oninput = () => { reprocessVideo.currentTime = Number($('reSeek').value || 0); updateReSeekUi(); drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
 $('setFrameBtn').onclick = () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
-$('lockRoiReBtn').onclick = () => { reRoi.locked = true; drawRoi(reprocessVideo, reprocessOverlay, reRoi); setStatus('reStatus', `ROI travado: x=${Math.round(reRoi.x)}, y=${Math.round(reRoi.y)}, d=${$('roiDiameter').value}px.`); };
-$('unlockRoiReBtn').onclick = () => { reRoi.locked = false; drawRoi(reprocessVideo, reprocessOverlay, reRoi); setStatus('reStatus', 'ROI destravado.'); };
-$('centerRoiReBtn').onclick = () => { reRoi.locked = false; centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
+$('lockRoiReBtn').onclick = () => { reRoi.locked = true; drawRoi(reprocessVideo, reprocessOverlay, reRoi); updatePills(); setStatus('reStatus', `ROI travado: x=${Math.round(reRoi.x)}, y=${Math.round(reRoi.y)}, d=${$('roiDiameter').value}px; ${roiRelativeText(reprocessVideo, reRoi)}.`); };
+$('unlockRoiReBtn').onclick = () => { reRoi.locked = false; drawRoi(reprocessVideo, reprocessOverlay, reRoi); updatePills(); setStatus('reStatus', 'ROI destravado.'); };
+$('centerRoiReBtn').onclick = () => { reRoi.locked = false; centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updatePills(); };
 $('processVideoBtn').onclick = processLoadedVideo;
 $('exportReCsvBtn').onclick = exportReCsv;
 $('clearReBtn').onclick = clearReData;
 
-liveVideo.addEventListener('loadedmetadata', () => { centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); });
-reprocessVideo.addEventListener('loadedmetadata', () => { clampRoiToVideo(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
-reprocessVideo.addEventListener('timeupdate', () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
+liveVideo.addEventListener('loadedmetadata', () => { centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); });
+reprocessVideo.addEventListener('loadedmetadata', () => { clampRoiToVideo(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); updatePills(); });
+reprocessVideo.addEventListener('timeupdate', () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); updatePills(); });
 liveVideo.addEventListener('play', () => drawRoi(liveVideo, liveOverlay, liveRoi));
 
 updatePills();
