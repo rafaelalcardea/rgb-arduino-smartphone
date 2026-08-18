@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11</h1>
-  <p>Versão v11: comandos Arduino; START inicia RGB + vídeo + Arduino; mostra dimensões do vídeo e posição relativa do ROI.</p>
+  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11b</h1>
+  <p>Versão v11b: correção do terminador dos comandos seriais; comandos Arduino; START inicia RGB + vídeo + Arduino; mostra dimensões do vídeo e posição relativa do ROI.</p>
 </header>
 
 <main>
@@ -1024,7 +1024,7 @@ async function sendSerialCommand(command) {
   try {
     const writer = serialPort.writable.getWriter();
     const encoder = new TextEncoder();
-    await writer.write(encoder.encode(command + '\\n'));
+    await writer.write(encoder.encode(command + '\n'));
     writer.releaseLock();
     setStatus('serialStatus', `Comando enviado ao Arduino: ${command}`);
     return true;
