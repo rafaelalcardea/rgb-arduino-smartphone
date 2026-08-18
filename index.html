@@ -225,7 +225,7 @@
 <body>
 <header>
   <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11d</h1>
-  <p>Versão v11d: replicatas do fotodiodo e RGB sincronizadas com o Arduino; cada nova corrida começa com os resultados vazios.</p>
+  <p>Versão v11e: máximos RGB atualizados em tempo real por replicata; tabela do perfil otimizada; cada nova corrida começa vazia.</p>
 </header>
 
 <main>
@@ -840,12 +840,16 @@ function startRgb() {
     const t = liveSampleIndex * liveIntervalSec;
     liveSampleIndex++;
 
-    liveRgbData.push({t, g: val.g, b: val.b, pixels: val.pixels});
+    const row = {t, g: val.g, b: val.b, pixels: val.pixels};
+    liveRgbData.push(row);
+
+    // Atualiza somente a nova linha do perfil, em vez de reconstruir
+    // centenas de linhas a cada 0,1 s. Isso mantém a interface responsiva.
+    appendLiveRgbRow(row);
 
     // Quando o Arduino informa a replicata atual, o RGB é associado
-    // diretamente à mesma Rep 1, Rep 2, ... Rep N. Assim cada linha é
-    // preenchida em sequência e os máximos G e B são atualizados
-    // independentemente dentro da própria replicata.
+    // diretamente à mesma Rep 1, Rep 2, ... Rep N. Os máximos G e B
+    // são atualizados independentemente e aparecem imediatamente na tela.
     if (liveUseSerialReplicates && Number.isInteger(serialCurrentRep)) {
       const idx = serialCurrentRep - 1;
       if (idx >= 0 && idx < expectedPeakCount()) {
@@ -860,9 +864,15 @@ function startRgb() {
         }
         livePeaks[idx] = p;
       }
+    } else if (!liveUseSerialReplicates) {
+      // Mantém também o botão "Iniciar somente RGB + vídeo" funcional:
+      // sem sincronismo serial, os máximos são detectados continuamente.
+      livePeaks = combinePeaks(liveRgbData);
     }
 
-    renderLiveTables();
+    // A tabela de máximos e o resumo são pequenos e podem ser atualizados
+    // em toda leitura sem pesar a interface.
+    renderLivePeakResults();
 
     setStatus('liveStatus',
       `Corrida em andamento — RGB: ${liveRgbData.length} leituras; intervalo nominal: ${liveIntervalSec.toFixed(3).replace('.', ',')} s.`);
@@ -1044,6 +1054,13 @@ function renderLiveRgbTable() {
     r => `<tr><td>${fmt(r.t, 3)}</td><td>${fmt(r.g, 3)}</td><td>${fmt(r.b, 3)}</td></tr>`);
 }
 
+function appendLiveRgbRow(r) {
+  const tb = $('liveRgbTable').querySelector('tbody');
+  tb.insertAdjacentHTML('beforeend',
+    `<tr><td>${fmt(r.t, 3)}</td><td>${fmt(r.g, 3)}</td><td>${fmt(r.b, 3)}</td></tr>`);
+  while (tb.rows.length > 500) tb.deleteRow(0);
+}
+
 function renderPeakTable(tableId, peaks) {
   const tb = $(tableId).querySelector('tbody');
   tb.innerHTML = '';
@@ -1053,10 +1070,14 @@ function renderPeakTable(tableId, peaks) {
   });
 }
 
-function renderLiveTables() {
-  renderLiveRgbTable();
+function renderLivePeakResults() {
   renderPeakTable('liveMaxTable', livePeaks);
   renderSummary('liveSummary', livePeaks);
+}
+
+function renderLiveTables() {
+  renderLiveRgbTable();
+  renderLivePeakResults();
 }
 
 function calcLivePeaks() {
@@ -1266,6 +1287,11 @@ function parseSerialLine(line) {
       pdMaxima[idx] = value;
       renderPdTables();
     }
+
+    // "Maximo = ..." marca o fim da replicata corrente no Arduino.
+    // Congela também o máximo RGB dessa Rep até a próxima "Replicata = N".
+    serialCurrentRep = null;
+    renderLivePeakResults();
     return;
   }
 }
