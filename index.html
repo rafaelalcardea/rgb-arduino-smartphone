@@ -1,458 +1,1168 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Teste RGB + Arduino — Smartphone e Fotodiodo v3</title>
-<style>
-  :root{--bg:#f6f7f9;--card:#fff;--txt:#1f2937;--mut:#6b7280;--line:#d1d5db;--accent:#2563eb;--ok:#0f766e;--warn:#b45309;}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif;font-size:14px}
-  header{background:#111827;color:#fff;padding:14px 18px} header h1{font-size:18px;margin:0 0 4px} header p{margin:0;color:#d1d5db}
-  main{padding:16px;display:grid;grid-template-columns: minmax(520px, 1.35fr) minmax(360px, .9fr);gap:14px;align-items:start}
-  section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  h2{font-size:16px;margin:0 0 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:7px 0}.row label{font-weight:bold}
-  button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font-weight:bold}button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}button.good{background:var(--ok);color:#fff;border-color:var(--ok)}button.warn{background:var(--warn);color:#fff;border-color:var(--warn)}button:disabled{opacity:.45;cursor:not-allowed}
-  input,select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;max-width:100%}.small{width:86px}.medium{width:140px}.hint{color:var(--mut);font-size:12px;line-height:1.35}
-  .videoWrap{position:relative;background:#000;border-radius:10px;overflow:hidden;display:inline-block;max-width:100%}video,canvas.overlay{display:block;max-width:100%;height:auto}.overlay{position:absolute;inset:0;cursor:crosshair}.status{font-weight:bold}.ok{color:var(--ok)}.bad{color:#b91c1c}.muted{color:var(--mut)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{border:1px solid var(--line);border-radius:8px;padding:9px;background:#fafafa}.metric .label{color:var(--mut);font-size:12px}.metric .value{font-size:20px;font-weight:bold;margin-top:3px}
-  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}th,td{border:1px solid var(--line);padding:5px;text-align:center}th{background:#eef2ff}td.left{text-align:left}.log{height:180px;overflow:auto;background:#0b1020;color:#d1e7ff;border-radius:8px;padding:8px;font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;background:#f9fafb}
-  @media(max-width:950px){main{grid-template-columns:1fr}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RGB + Arduino — aquisição e reprocessamento</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --ok: #047857;
+      --warn: #b45309;
+      --bad: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      padding: 16px 20px;
+      background: #0f172a;
+      color: white;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    header p {
+      margin: 6px 0 0;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+    main {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+      gap: 16px;
+    }
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      padding: 14px;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+      color: #111827;
+    }
+    .card h3 {
+      margin: 14px 0 8px;
+      font-size: 14px;
+      color: #111827;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    input, select, button {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .field { min-width: 150px; flex: 1; }
+    .field.small { min-width: 100px; flex: 0 0 120px; }
+    .field.medium { min-width: 170px; flex: 0 0 180px; }
+    button {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+    button.secondary { background: #475569; }
+    button.ok { background: var(--ok); }
+    button.warn { background: var(--warn); }
+    button.bad { background: var(--bad); }
+    button.light {
+      background: #e5e7eb;
+      color: #111827;
+      border: 1px solid #cbd5e1;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 18px;
+    }
+    .videoWrap {
+      position: relative;
+      width: 100%;
+      background: #111827;
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 260px;
+    }
+    video {
+      display: block;
+      width: 100%;
+      max-height: 480px;
+      background: #111827;
+    }
+    canvas.overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      pointer-events: auto;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      margin: 2px 4px 2px 0;
+    }
+    .pill.ok { background: #dcfce7; color: #14532d; }
+    .pill.warn { background: #ffedd5; color: #7c2d12; }
+    .pill.bad { background: #fee2e2; color: #7f1d1d; }
+    .tables {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .tableBox {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      max-height: 360px;
+      background: white;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 560px;
+      font-size: 12px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f1f5f9;
+      color: #111827;
+      font-weight: 700;
+    }
+    td:first-child, th:first-child { text-align: left; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+    }
+    .metric {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 8px;
+      background: #fafafa;
+    }
+    .metric .name { color: var(--muted); font-size: 12px; }
+    .metric .value { font-size: 16px; font-weight: 700; margin-top: 3px; }
+    .note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 980px) {
+      .grid2, .grid3, .tables, .summary { grid-template-columns: 1fr; }
+      .field.small, .field.medium { flex: 1; }
+    }
+  </style>
 </head>
 <body>
 <header>
-  <h1>Teste RGB + Arduino — smartphone como câmera e fotodiodo pela Serial v3</h1>
-  <p>O Arduino continua com a leitura do fotodiodo como está; esta tela lê a porta serial, calcula G/B pela imagem, mostra os máximos e também alinha o perfil RGB aos tempos do fotodiodo.</p>
+  <h1>RGB + Arduino — aquisição, gravação de vídeo e reprocessamento</h1>
+  <p>Versão para DroidCam/câmera, Web Serial, ROI travado, exportação de vídeo e reprocessamento de G/B.</p>
 </header>
+
 <main>
-<section>
-  <h2>1. Câmera / ROI</h2>
-  <div class="row">
-    <label>Câmera:</label>
-    <select id="cameraSelect"></select>
-    <button id="btnListCameras">Listar câmeras</button>
-    <button id="btnStartCamera" class="primary">Abrir câmera</button>
-    <button id="btnStopCamera">Parar câmera</button>
-  </div>
-  <div class="row">
-    <label>Diâmetro ROI (px):</label><input id="roiDiameter" class="small" type="number" value="120" min="5" step="1">
-    <button id="btnLockROI" class="warn" type="button">Travar ROI</button>
-    <label>Intervalo RGB (s):</label><input id="sampleInterval" class="small" type="number" value="0.1" min="0.01" step="0.01">
-    <span class="hint">Clique/arraste na imagem para posicionar a ROI. Depois de travar, o centro fica fixo; o diâmetro ainda pode ser alterado pelo campo numérico.</span>
-  </div>
-  <div class="videoWrap">
-    <video id="video" autoplay muted playsinline width="800"></video>
-    <canvas id="overlay" class="overlay"></canvas>
-  </div>
-  <canvas id="workCanvas" style="display:none"></canvas>
-  <div class="row hint">
-    ROI atual: <span id="roiInfo" class="pill">não definida</span>
-    Câmera: <span id="camStatus" class="pill">desconectada</span>
-  </div>
-</section>
+  <section class="card">
+    <h2>Configuração geral</h2>
+    <div class="row">
+      <div class="field">
+        <label for="runName">Nome da amostra/corrida</label>
+        <input id="runName" value="H2O2_hexa_5mM" />
+      </div>
+      <div class="field small">
+        <label for="roiDiameter">Diâmetro ROI (px)</label>
+        <input id="roiDiameter" type="number" value="55" min="3" step="1" />
+      </div>
+      <div class="field small">
+        <label for="sampleInterval">Intervalo RGB (s)</label>
+        <input id="sampleInterval" type="number" value="0.1" min="0.01" step="0.001" />
+      </div>
+      <div class="field small">
+        <label for="expectedPeaks">Nº de picos</label>
+        <input id="expectedPeaks" type="number" value="5" min="1" step="1" />
+      </div>
+      <div class="field small">
+        <label for="minPeakGap">Intervalo mín. pico (s)</label>
+        <input id="minPeakGap" type="number" value="4" min="0" step="0.1" />
+      </div>
+    </div>
+    <div>
+      <span id="roiInfo" class="pill warn">ROI não travado</span>
+      <span id="cameraInfo" class="pill">Câmera fechada</span>
+      <span id="serialInfo" class="pill">Serial desconectado</span>
+      <span id="recordInfo" class="pill">Vídeo não gravando</span>
+    </div>
+  </section>
 
-<section>
-  <h2>2. Arduino / Serial</h2>
-  <div class="row">
-    <button id="btnConnectSerial" class="primary">Conectar Arduino</button>
-    <button id="btnDisconnectSerial">Desconectar</button>
-    <span id="serialStatus" class="status bad">Serial desconectada</span>
-  </div>
-  <div class="hint">Use Chrome ou Edge. Se esta página estiver conectada à Serial, o Monitor Serial da IDE normalmente não poderá ficar aberto ao mesmo tempo.</div>
-  <h2 style="margin-top:12px">3. Aquisição RGB</h2>
-  <div class="row">
-    <button id="btnStartRun" class="good">Iniciar registro RGB</button>
-    <button id="btnStopRun" class="warn">Parar registro RGB</button>
-    <button id="btnNewRep">Nova replicata manual</button>
-    <button id="btnFinalizeRep">Finalizar replicata</button>
-    <button id="btnClear">Limpar resultados</button>
-  </div>
-  <div class="hint">Se a Serial estiver conectada, a replicata muda automaticamente quando aparecer “Replicata = n” vindo do Arduino. O botão “Nova replicata manual” serve para testar sem Serial.</div>
-  <div class="grid2" style="margin-top:10px">
-    <div class="metric"><div class="label">G atual</div><div id="gNow" class="value">—</div></div>
-    <div class="metric"><div class="label">B atual</div><div id="bNow" class="value">—</div></div>
-    <div class="metric"><div class="label">Máximo G / tempo</div><div id="gMax" class="value">—</div></div>
-    <div class="metric"><div class="label">Máximo B / tempo</div><div id="bMax" class="value">—</div></div>
-  </div>
-  <div class="row hint">Status: <span id="runStatus" class="pill">parado</span> | Replicata atual: <span id="repStatus" class="pill">—</span></div>
-</section>
+  <section class="grid2">
+    <div class="card">
+      <h2>Aquisição ao vivo</h2>
+      <div class="row">
+        <button id="listCamerasBtn" class="light">Listar câmeras</button>
+        <div class="field">
+          <label for="cameraSelect">Câmera</label>
+          <select id="cameraSelect"></select>
+        </div>
+        <button id="openCameraBtn">Abrir câmera / DroidCam</button>
+        <button id="closeCameraBtn" class="secondary">Fechar câmera</button>
+      </div>
 
-<section style="grid-column:1 / -1">
-  <h2>Resultados finais por replicata</h2>
-  <div class="row">
-    <button id="btnCopyTable">Copiar tabela</button>
-    <button id="btnCSV">Baixar CSV opcional</button>
-  </div>
-  <div class="hint">Os máximos de G e B são calculados a partir de todos os frames RGB amostrados. A tabela temporal abaixo é apenas um alinhamento com os tempos impressos pelo fotodiodo.</div>
-  <table id="resultsTable">
-    <thead>
-      <tr>
-        <th>Replicata</th>
-        <th>Tempo máx. fotodiodo (s)</th>
-        <th>Máx. fotodiodo</th>
-        <th>Tempo máx. G (s)</th>
-        <th>Máx. G</th>
-        <th>Tempo máx. B (s)</th>
-        <th>Máx. B</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
+      <div class="videoWrap" id="liveWrap">
+        <video id="liveVideo" playsinline muted></video>
+        <canvas id="liveOverlay" class="overlay"></canvas>
+      </div>
 
-<section style="grid-column:1 / -1">
-  <h2>Perfil temporal alinhado aos tempos do fotodiodo</h2>
-  <div class="row">
-    <button id="btnCopyTemporal">Copiar perfil temporal</button>
-    <button id="btnTemporalCSV">Baixar CSV temporal</button>
-    <span class="hint">Para cada tempo impresso pelo Arduino, são exibidos G e B do ponto RGB mais próximo.</span>
-  </div>
-  <table id="temporalTable">
-    <thead>
-      <tr>
-        <th>Replicata</th>
-        <th>Tempo fotodiodo (s)</th>
-        <th>Fotodiodo</th>
-        <th>Tempo RGB mais próximo (s)</th>
-        <th>G</th>
-        <th>B</th>
-        <th>Δt RGB−fotodiodo (s)</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
+      <div class="row" style="margin-top:10px">
+        <button id="lockRoiBtn" class="ok">Travar ROI</button>
+        <button id="unlockRoiBtn" class="warn">Destravar ROI</button>
+        <button id="centerRoiBtn" class="light">Centralizar ROI</button>
+      </div>
 
-<section style="grid-column:1 / -1">
-  <h2>Log da Serial / corrida</h2>
-  <div id="log" class="log"></div>
-</section>
+      <h3>Registro RGB e gravação do vídeo</h3>
+      <div class="row">
+        <button id="startRgbBtn" class="ok">Iniciar registro RGB</button>
+        <button id="stopRgbBtn" class="warn">Parar registro RGB</button>
+        <button id="clearLiveBtn" class="light">Limpar dados ao vivo</button>
+      </div>
+      <div class="row">
+        <button id="startVideoRecBtn" class="ok">Iniciar gravação do vídeo</button>
+        <button id="stopVideoRecBtn" class="warn">Parar e preparar vídeo</button>
+        <button id="downloadVideoBtn" class="secondary">Exportar último vídeo</button>
+      </div>
+      <div id="liveStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>Arduino / fotodiodo</h2>
+      <div class="row">
+        <button id="connectSerialBtn">Conectar Arduino</button>
+        <button id="disconnectSerialBtn" class="secondary">Desconectar</button>
+        <button id="clearSerialBtn" class="light">Limpar serial</button>
+      </div>
+      <p class="note">O perfil do serial fica separado do RGB. Aqui aparecem apenas dados do fotodiodo lidos do Arduino.</p>
+      <div class="tables">
+        <div>
+          <h3>Perfil fotodiodo</h3>
+          <div class="tableBox">
+            <table id="pdTable">
+              <thead><tr><th>Tempo (s)</th><th>Fotodiodo</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h3>Máximos do fotodiodo</h3>
+          <div class="tableBox">
+            <table id="pdMaxTable">
+              <thead><tr><th>Rep</th><th>Máx. fotodiodo</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="exportPdCsvBtn" class="secondary">Exportar CSV fotodiodo</button>
+      </div>
+      <div id="serialStatus" class="status"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Resultados da aquisição ao vivo — RGB</h2>
+    <div class="summary" id="liveSummary"></div>
+    <div class="tables" style="margin-top:12px">
+      <div>
+        <h3>Perfil RGB ao vivo</h3>
+        <div class="tableBox">
+          <table id="liveRgbTable">
+            <thead><tr><th>Tempo (s)</th><th>G</th><th>B</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3>Máximos por replicata — ao vivo</h3>
+        <div class="tableBox">
+          <table id="liveMaxTable">
+            <thead><tr><th>Rep</th><th>Tempo máx. G</th><th>Máx. G</th><th>Tempo máx. B</th><th>Máx. B</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="calcLivePeaksBtn">Calcular máximos RGB</button>
+      <button id="exportLiveCsvBtn" class="secondary">Exportar CSV RGB ao vivo</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Reprocessamento de vídeo salvo</h2>
+    <p class="note">Carregue um vídeo .webm/.mp4, selecione/trave o ROI no preview, escolha o diâmetro e o intervalo entre frames, depois clique em reprocessar. O centro do ROI permanece travado; você pode mudar apenas o diâmetro para testar 110, 55, 27 etc.</p>
+    <div class="row">
+      <div class="field">
+        <label for="videoFileInput">Carregar vídeo salvo</label>
+        <input id="videoFileInput" type="file" accept="video/*" />
+      </div>
+      <button id="loadVideoBtn">Carregar vídeo</button>
+      <button id="setFrameBtn" class="light">Usar frame atual para ROI</button>
+    </div>
+
+    <div class="videoWrap" id="reprocessWrap">
+      <video id="reprocessVideo" playsinline controls muted></video>
+      <canvas id="reprocessOverlay" class="overlay"></canvas>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="lockRoiReBtn" class="ok">Travar ROI reprocessamento</button>
+      <button id="unlockRoiReBtn" class="warn">Destravar ROI reprocessamento</button>
+      <button id="centerRoiReBtn" class="light">Centralizar ROI</button>
+      <button id="processVideoBtn">Reprocessar vídeo</button>
+    </div>
+
+    <div class="summary" id="reSummary"></div>
+
+    <div class="tables" style="margin-top:12px">
+      <div>
+        <h3>Perfil RGB reprocessado</h3>
+        <div class="tableBox">
+          <table id="reRgbTable">
+            <thead><tr><th>Tempo (s)</th><th>G</th><th>B</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3>Máximos por replicata — reprocessado</h3>
+        <div class="tableBox">
+          <table id="reMaxTable">
+            <thead><tr><th>Rep</th><th>Tempo máx. G</th><th>Máx. G</th><th>Tempo máx. B</th><th>Máx. B</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="exportReCsvBtn" class="secondary">Exportar CSV reprocessado</button>
+      <button id="clearReBtn" class="light">Limpar reprocessamento</button>
+    </div>
+    <div id="reStatus" class="status"></div>
+  </section>
 </main>
 
 <script>
-const video = document.getElementById('video');
-const overlay = document.getElementById('overlay');
-const octx = overlay.getContext('2d');
-const workCanvas = document.getElementById('workCanvas');
-const wctx = workCanvas.getContext('2d', { willReadFrequently: true });
-const cameraSelect = document.getElementById('cameraSelect');
-let stream = null;
-let roi = {x:null,y:null,r:60};
-let roiLocked = false;
-let dragging = false;
-let rgbTimer = null;
-let runActive = false;
-let runStart = 0;
-let currentRep = null;
-let results = [];
-let current = null;
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const fmt = (v, n=3) => Number.isFinite(v) ? v.toFixed(n).replace('.', ',') : '';
+const fmtDot = (v, n=6) => Number.isFinite(v) ? v.toFixed(n) : '';
+const nowSafe = () => new Date().toISOString().replace(/[:.]/g, '-');
+const safeName = (s) => (s || 'corrida').trim().replace(/[^\w\-]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '') || 'corrida';
+
+let liveStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let lastVideoBlob = null;
+let lastVideoUrl = null;
+
 let serialPort = null;
 let serialReader = null;
 let serialKeepReading = false;
-let serialBuffer = '';
-let alignedRows = [];
-let finalMaxListMode = false;
-let finalMaxListIndex = 1;
+let serialTextBuffer = '';
 
-function fmt(v,d=2){return (v===null||v===undefined||Number.isNaN(v))?'—':Number(v).toFixed(d).replace('.',',')}
-function fmtDot(v,d=4){return (v===null||v===undefined||Number.isNaN(v))?'':Number(v).toFixed(d)}
-function log(msg){const el=document.getElementById('log'); el.textContent += msg + '\n'; el.scrollTop = el.scrollHeight;}
-function setText(id, txt){document.getElementById(id).textContent = txt;}
-function setROIInfo(){setText('roiInfo', roi.x===null?'não definida':`x=${Math.round(roi.x)}, y=${Math.round(roi.y)}, d=${Math.round(roi.r*2)} px, ${roiLocked?'travada':'destravada'}`)}
-function updateOverlaySize(){
-  const rect = video.getBoundingClientRect();
-  overlay.width = video.videoWidth || rect.width || 800;
-  overlay.height = video.videoHeight || rect.height || 450;
-  drawOverlay();
+let liveRoi = {x: 0, y: 0, locked: false};
+let reRoi = {x: 0, y: 0, locked: false};
+
+let liveRgbData = [];
+let livePeaks = [];
+let liveIntervalTimer = null;
+let liveStartTime = null;
+
+let pdData = [];
+let pdMaxima = [];
+let reRgbData = [];
+let rePeaks = [];
+
+const liveVideo = $('liveVideo');
+const liveOverlay = $('liveOverlay');
+const reprocessVideo = $('reprocessVideo');
+const reprocessOverlay = $('reprocessOverlay');
+
+const liveCanvas = document.createElement('canvas');
+const liveCtx = liveCanvas.getContext('2d', { willReadFrequently: true });
+const reCanvas = document.createElement('canvas');
+const reCtx = reCanvas.getContext('2d', { willReadFrequently: true });
+
+function setStatus(id, msg) {
+  $(id).textContent = msg || '';
 }
-function drawOverlay(){
-  octx.clearRect(0,0,overlay.width,overlay.height);
-  if(roi.x!==null){
-    octx.beginPath(); octx.arc(roi.x, roi.y, roi.r, 0, Math.PI*2);
-    octx.lineWidth = 3; octx.strokeStyle = '#00ff80'; octx.stroke();
-    octx.beginPath(); octx.arc(roi.x, roi.y, 3, 0, Math.PI*2); octx.fillStyle = '#00ff80'; octx.fill();
+
+function updatePills() {
+  const d = Number($('roiDiameter').value || 55);
+  const roiText = liveRoi.locked ? `ROI ao vivo travado: x=${Math.round(liveRoi.x)}, y=${Math.round(liveRoi.y)}, d=${d}px` : 'ROI não travado';
+  $('roiInfo').className = liveRoi.locked ? 'pill ok' : 'pill warn';
+  $('roiInfo').textContent = roiText;
+
+  $('cameraInfo').className = liveStream ? 'pill ok' : 'pill';
+  $('cameraInfo').textContent = liveStream ? 'Câmera aberta' : 'Câmera fechada';
+
+  $('serialInfo').className = serialPort ? 'pill ok' : 'pill';
+  $('serialInfo').textContent = serialPort ? 'Serial conectado' : 'Serial desconectado';
+
+  $('recordInfo').className = mediaRecorder && mediaRecorder.state === 'recording' ? 'pill ok' : 'pill';
+  $('recordInfo').textContent = mediaRecorder && mediaRecorder.state === 'recording' ? 'Vídeo gravando' : 'Vídeo não gravando';
+}
+
+function videoSize(video) {
+  const rect = video.getBoundingClientRect();
+  return {displayW: rect.width, displayH: rect.height, videoW: video.videoWidth || rect.width, videoH: video.videoHeight || rect.height};
+}
+
+function displayToVideoCoords(video, clientX, clientY) {
+  const rect = video.getBoundingClientRect();
+  const sx = (video.videoWidth || rect.width) / rect.width;
+  const sy = (video.videoHeight || rect.height) / rect.height;
+  return {x: (clientX - rect.left) * sx, y: (clientY - rect.top) * sy};
+}
+
+function resizeOverlay(video, canvas) {
+  const rect = video.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(rect.width * ratio));
+  canvas.height = Math.max(1, Math.round(rect.height * ratio));
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+}
+
+function drawRoi(video, canvas, roi) {
+  resizeOverlay(video, canvas);
+  const ctx = canvas.getContext('2d');
+  const ratio = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!video.videoWidth || !video.videoHeight) return;
+  if (!roi.x && !roi.y) {
+    roi.x = video.videoWidth / 2;
+    roi.y = video.videoHeight / 2;
+  }
+  const rect = video.getBoundingClientRect();
+  const sx = rect.width / video.videoWidth;
+  const sy = rect.height / video.videoHeight;
+  const x = roi.x * sx * ratio;
+  const y = roi.y * sy * ratio;
+  const r = (Number($('roiDiameter').value || 55) / 2) * ((sx + sy) / 2) * ratio;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.lineWidth = 2 * ratio;
+  ctx.strokeStyle = roi.locked ? '#16a34a' : '#f97316';
+  ctx.stroke();
+  ctx.fillStyle = roi.locked ? 'rgba(22, 163, 74, 0.10)' : 'rgba(249, 115, 22, 0.10)';
+  ctx.fill();
+  ctx.fillStyle = roi.locked ? '#16a34a' : '#f97316';
+  ctx.beginPath();
+  ctx.arc(x, y, 3 * ratio, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function centerRoi(video, roi) {
+  if (video.videoWidth && video.videoHeight) {
+    roi.x = video.videoWidth / 2;
+    roi.y = video.videoHeight / 2;
   }
 }
-function canvasPoint(ev){
-  const rect = overlay.getBoundingClientRect();
-  const x = (ev.clientX - rect.left) * (overlay.width / rect.width);
-  const y = (ev.clientY - rect.top) * (overlay.height / rect.height);
-  return {x,y};
-}
-overlay.addEventListener('mousedown', ev=>{
-  if(roiLocked) return;
-  dragging=true; const p=canvasPoint(ev); roi.x=p.x; roi.y=p.y; drawOverlay(); setROIInfo();
-});
-overlay.addEventListener('mousemove', ev=>{
-  if(!dragging || roiLocked) return;
-  const p=canvasPoint(ev); roi.x=p.x; roi.y=p.y; drawOverlay(); setROIInfo();
-});
-window.addEventListener('mouseup', ()=>{dragging=false;});
-document.getElementById('roiDiameter').addEventListener('input', e=>{
-  roi.r=Math.max(2, Number(e.target.value)/2);
-  drawOverlay(); setROIInfo();
-});
-document.getElementById('btnLockROI').addEventListener('click', ()=>{
-  if(roi.x===null){alert('Selecione a ROI antes de travar.'); return;}
-  roiLocked = !roiLocked; dragging=false;
-  const btn=document.getElementById('btnLockROI');
-  btn.textContent = roiLocked ? 'Destravar ROI' : 'Travar ROI';
-  btn.className = roiLocked ? 'good' : 'warn';
-  overlay.style.cursor = roiLocked ? 'not-allowed' : 'crosshair';
-  drawOverlay(); setROIInfo();
-  log(roiLocked ? 'ROI travada. O centro ficará fixo; o diâmetro ainda pode ser alterado.' : 'ROI destravada. Clique/arraste para reposicionar.');
-});
 
-async function listCameras(){
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  cameraSelect.innerHTML='';
-  devices.filter(d=>d.kind==='videoinput').forEach((d,i)=>{
-    const opt=document.createElement('option'); opt.value=d.deviceId; opt.textContent=d.label || `Câmera ${i+1}`; cameraSelect.appendChild(opt);
+function setupRoiInteraction(video, canvas, roi, afterMove) {
+  canvas.addEventListener('click', (ev) => {
+    if (roi.locked) return;
+    if (!video.videoWidth) return;
+    const p = displayToVideoCoords(video, ev.clientX, ev.clientY);
+    roi.x = Math.max(0, Math.min(video.videoWidth, p.x));
+    roi.y = Math.max(0, Math.min(video.videoHeight, p.y));
+    afterMove();
   });
 }
-async function startCamera(){
-  try{
-    if(stream) stopCamera();
-    const deviceId = cameraSelect.value;
-    const constraints = { video: deviceId ? {deviceId:{exact:deviceId}, width:{ideal:1280}, height:{ideal:720}, frameRate:{ideal:30}} : {width:{ideal:1280}, height:{ideal:720}, frameRate:{ideal:30}}, audio:false };
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = stream;
-    await video.play();
-    await listCameras();
-    setText('camStatus','conectada'); document.getElementById('camStatus').className='pill ok';
-    setTimeout(updateOverlaySize, 300);
-    log('Câmera aberta. Selecione a ROI na imagem; depois use Travar ROI se quiser fixar o centro.');
-  }catch(err){alert('Erro ao abrir câmera: '+err.message); log('Erro câmera: '+err.message);}
-}
-function stopCamera(){
-  if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null;}
-  setText('camStatus','desconectada'); document.getElementById('camStatus').className='pill';
-}
-document.getElementById('btnListCameras').onclick=listCameras;
-document.getElementById('btnStartCamera').onclick=startCamera;
-document.getElementById('btnStopCamera').onclick=stopCamera;
-if(navigator.mediaDevices) listCameras().catch(()=>{});
 
-function getRGBMean(){
-  if(!video.videoWidth || roi.x===null) return null;
-  workCanvas.width = video.videoWidth; workCanvas.height = video.videoHeight;
-  wctx.drawImage(video,0,0,workCanvas.width,workCanvas.height);
-  const x0=Math.max(0, Math.floor(roi.x-roi.r)), y0=Math.max(0, Math.floor(roi.y-roi.r));
-  const x1=Math.min(workCanvas.width-1, Math.ceil(roi.x+roi.r)), y1=Math.min(workCanvas.height-1, Math.ceil(roi.y+roi.r));
-  const img=wctx.getImageData(x0,y0,x1-x0+1,y1-y0+1).data;
-  let rs=0,gs=0,bs=0,n=0;
-  const width=x1-x0+1;
-  for(let yy=y0; yy<=y1; yy++){
-    for(let xx=x0; xx<=x1; xx++){
-      const dx=xx-roi.x, dy=yy-roi.y;
-      if(dx*dx+dy*dy<=roi.r*roi.r){
-        const idx=((yy-y0)*width + (xx-x0))*4;
-        rs += img[idx]; gs += img[idx+1]; bs += img[idx+2]; n++;
+setupRoiInteraction(liveVideo, liveOverlay, liveRoi, () => drawRoi(liveVideo, liveOverlay, liveRoi));
+setupRoiInteraction(reprocessVideo, reprocessOverlay, reRoi, () => drawRoi(reprocessVideo, reprocessOverlay, reRoi));
+
+window.addEventListener('resize', () => {
+  drawRoi(liveVideo, liveOverlay, liveRoi);
+  drawRoi(reprocessVideo, reprocessOverlay, reRoi);
+});
+
+$('roiDiameter').addEventListener('input', () => {
+  drawRoi(liveVideo, liveOverlay, liveRoi);
+  drawRoi(reprocessVideo, reprocessOverlay, reRoi);
+  updatePills();
+});
+
+async function listCameras() {
+  try {
+    await navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(s => s.getTracks().forEach(t => t.stop()));
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    const sel = $('cameraSelect');
+    sel.innerHTML = '';
+    cams.forEach((cam, idx) => {
+      const opt = document.createElement('option');
+      opt.value = cam.deviceId;
+      opt.textContent = cam.label || `Câmera ${idx + 1}`;
+      sel.appendChild(opt);
+    });
+    setStatus('liveStatus', `${cams.length} câmera(s) encontrada(s).`);
+  } catch (err) {
+    setStatus('liveStatus', 'Erro ao listar câmeras: ' + err.message);
+  }
+}
+
+async function openCamera() {
+  try {
+    if (liveStream) {
+      liveStream.getTracks().forEach(t => t.stop());
+      liveStream = null;
+    }
+    const deviceId = $('cameraSelect').value;
+    const constraints = {
+      video: deviceId ? {deviceId: {exact: deviceId}} : true,
+      audio: false
+    };
+    liveStream = await navigator.mediaDevices.getUserMedia(constraints);
+    liveVideo.srcObject = liveStream;
+    await liveVideo.play();
+    centerRoi(liveVideo, liveRoi);
+    drawRoi(liveVideo, liveOverlay, liveRoi);
+    setStatus('liveStatus', 'Câmera/DroidCam aberta.');
+    updatePills();
+  } catch (err) {
+    setStatus('liveStatus', 'Erro ao abrir câmera: ' + err.message);
+    updatePills();
+  }
+}
+
+function closeCamera() {
+  stopRgb();
+  if (mediaRecorder && mediaRecorder.state === 'recording') stopVideoRecording();
+  if (liveStream) {
+    liveStream.getTracks().forEach(t => t.stop());
+    liveStream = null;
+  }
+  liveVideo.srcObject = null;
+  updatePills();
+  setStatus('liveStatus', 'Câmera fechada.');
+}
+
+function meanGBFromVideo(video, roi) {
+  if (!video.videoWidth || !video.videoHeight) return null;
+  const d = Number($('roiDiameter').value || 55);
+  const r = d / 2;
+  const cx = roi.x || video.videoWidth / 2;
+  const cy = roi.y || video.videoHeight / 2;
+  const x0 = Math.max(0, Math.floor(cx - r));
+  const y0 = Math.max(0, Math.floor(cy - r));
+  const x1 = Math.min(video.videoWidth, Math.ceil(cx + r));
+  const y1 = Math.min(video.videoHeight, Math.ceil(cy + r));
+  const w = x1 - x0;
+  const h = y1 - y0;
+  if (w <= 0 || h <= 0) return null;
+
+  const canvas = video === liveVideo ? liveCanvas : reCanvas;
+  const ctx = video === liveVideo ? liveCtx : reCtx;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const image = ctx.getImageData(x0, y0, w, h).data;
+
+  let sg = 0, sb = 0, n = 0;
+  const rr = r * r;
+  for (let yy = 0; yy < h; yy++) {
+    const py = y0 + yy;
+    const dy = py - cy;
+    for (let xx = 0; xx < w; xx++) {
+      const px = x0 + xx;
+      const dx = px - cx;
+      if (dx*dx + dy*dy <= rr) {
+        const idx = (yy * w + xx) * 4;
+        sg += image[idx + 1];
+        sb += image[idx + 2];
+        n++;
       }
     }
   }
-  return n?{R:rs/n,G:gs/n,B:bs/n,n}:null;
+  if (!n) return null;
+  return {g: sg/n, b: sb/n, pixels: n};
 }
-function newCurrent(rep){
-  current = {rep:rep, startMs:performance.now(), gMax:null,gTime:null,bMax:null,bTime:null, pdMax:null,pdTime:null, rgbSeries:[], pdSeries:[], alignedPoints:[]};
-  currentRep = rep;
-  setText('repStatus', rep);
-  setText('gMax','—');
-  setText('bMax','—');
-  log(`--- Replicata ${rep} iniciada ---`);
-}
-function finalizeCurrent(){
-  if(!current) return;
-  const idx = results.findIndex(r=>r.rep===current.rep);
-  if(idx>=0) results[idx]=current; else results.push(current);
-  log(`Rep${current.rep} | Fotodiodo: ${fmt(current.pdMax,2)} (${fmt(current.pdTime,2)} s) | G: ${fmt(current.gMax,3)} (${fmt(current.gTime,2)} s) | B: ${fmt(current.bMax,3)} (${fmt(current.bTime,2)} s)`);
-  renderResults();
-}
-function sampleRGB(){
-  if(!runActive || !current) return;
-  const m=getRGBMean();
-  if(!m) return;
-  const t=(performance.now()-current.startMs)/1000;
-  const point = {t, R:m.R, G:m.G, B:m.B, n:m.n};
-  current.rgbSeries.push(point);
-  setText('gNow',fmt(m.G,3)); setText('bNow',fmt(m.B,3));
-  if(current.gMax===null || m.G>current.gMax){current.gMax=m.G; current.gTime=t; setText('gMax',`${fmt(m.G,3)} / ${fmt(t,2)} s`)}
-  if(current.bMax===null || m.B>current.bMax){current.bMax=m.B; current.bTime=t; setText('bMax',`${fmt(m.B,3)} / ${fmt(t,2)} s`)}
-}
-function startRun(){
-  if(!stream){alert('Abra a câmera antes.'); return;}
-  if(roi.x===null){alert('Selecione a ROI antes.'); return;}
-  runActive=true; runStart=performance.now(); setText('runStatus','registrando');
-  if(!current) newCurrent(results.length+1);
-  clearInterval(rgbTimer);
-  const intervalMs=Math.max(10, Number(document.getElementById('sampleInterval').value)*1000 || 100);
-  rgbTimer=setInterval(sampleRGB, intervalMs);
-  log(`Registro RGB iniciado. Intervalo: ${(intervalMs/1000).toFixed(3)} s`);
-}
-function stopRun(){
-  runActive=false; clearInterval(rgbTimer); rgbTimer=null; setText('runStatus','parado'); finalizeCurrent();
-}
-document.getElementById('btnStartRun').onclick=startRun;
-document.getElementById('btnStopRun').onclick=stopRun;
-document.getElementById('btnNewRep').onclick=()=>{finalizeCurrent(); newCurrent(results.length+1); if(!runActive) startRun();};
-document.getElementById('btnFinalizeRep').onclick=()=>{finalizeCurrent(); current=null; setText('repStatus','—');};
-document.getElementById('btnClear').onclick=()=>{results=[]; current=null; currentRep=null; renderResults(); setText('repStatus','—'); setText('gMax','—'); setText('bMax','—'); setText('gNow','—'); setText('bNow','—'); document.getElementById('log').textContent=''; alignedRows=[]; finalMaxListMode=false; finalMaxListIndex=1; renderTemporal();};
 
-function nearestRGBPoint(repObj, tPd){
-  if(!repObj || !repObj.rgbSeries || repObj.rgbSeries.length===0) return null;
-  let best = repObj.rgbSeries[0];
-  let bestDt = Math.abs(best.t - tPd);
-  for(const p of repObj.rgbSeries){
-    const dt = Math.abs(p.t - tPd);
-    if(dt < bestDt){best = p; bestDt = dt;}
-  }
-  return {...best, delta: best.t - tPd};
-}
-function addAlignedPoint(repObj, tPd, pd){
-  if(!repObj) return;
-  const rgb = nearestRGBPoint(repObj, tPd);
-  const row = {rep:repObj.rep, tPd, pd, tRgb:rgb?rgb.t:null, G:rgb?rgb.G:null, B:rgb?rgb.B:null, delta:rgb?rgb.delta:null};
-  repObj.pdSeries.push({t:tPd, value:pd});
-  repObj.alignedPoints.push(row);
-  alignedRows.push(row);
-  renderTemporal();
-}
-function ensureRep(rep){
-  let r = results.find(x=>x.rep===rep);
-  if(!r){
-    r = {rep:rep, startMs:null, gMax:null,gTime:null,bMax:null,bTime:null,pdMax:null,pdTime:null,rgbSeries:[],pdSeries:[],alignedPoints:[]};
-    results.push(r);
-  }
-  return r;
-}
-function parseSerialLine(line){
-  const trimmed=line.trim();
-  if(!trimmed) return;
-  log(trimmed);
-
-  if(finalMaxListMode && /^[-+]?[0-9]+(?:[\.,][0-9]+)?$/.test(trimmed)){
-    const v = Number(trimmed.replace(',','.'));
-    const repObj = ensureRep(finalMaxListIndex);
-    repObj.pdMax = v;
-    finalMaxListIndex++;
-    renderResults();
+function startRgb() {
+  if (!liveStream || !liveVideo.videoWidth) {
+    setStatus('liveStatus', 'Abra a câmera antes de iniciar o registro RGB.');
     return;
   }
-
-  let m = trimmed.match(/Replicata\s*=\s*(\d+)/i);
-  if(m){
-    finalMaxListMode = false;
-    const rep = Number(m[1]);
-    if(current && current.rep !== rep) finalizeCurrent();
-    if(!current || current.rep !== rep) newCurrent(rep);
-    if(!runActive && stream && roi.x!==null) startRun();
+  if (!liveRoi.locked) {
+    setStatus('liveStatus', 'Trave o ROI antes de iniciar o registro RGB.');
     return;
   }
+  stopRgb();
+  liveRgbData = [];
+  livePeaks = [];
+  renderLiveTables();
+  liveStartTime = performance.now();
+  const intervalMs = Math.max(10, Number($('sampleInterval').value || 0.1) * 1000);
+  liveIntervalTimer = setInterval(() => {
+    const val = meanGBFromVideo(liveVideo, liveRoi);
+    if (!val) return;
+    const t = (performance.now() - liveStartTime) / 1000;
+    liveRgbData.push({t, g: val.g, b: val.b, pixels: val.pixels});
+    if (liveRgbData.length % 5 === 0) renderLiveRgbTable();
+  }, intervalMs);
+  setStatus('liveStatus', 'Registro RGB iniciado.');
+}
 
-  m = trimmed.match(/^([0-9]+(?:[\.,][0-9]+)?)\s*:\s*([0-9]+(?:[\.,][0-9]+)?)/);
-  if(m && current){
-    const t = Number(m[1].replace(',','.'));
-    const v = Number(m[2].replace(',','.'));
-    if(current.pdMax===null || v>current.pdMax){current.pdMax=v; current.pdTime=t;}
-    addAlignedPoint(current, t, v);
+function stopRgb() {
+  if (liveIntervalTimer) clearInterval(liveIntervalTimer);
+  liveIntervalTimer = null;
+  if (liveRgbData.length) renderLiveTables();
+}
+
+function startVideoRecording() {
+  if (!liveStream) {
+    setStatus('liveStatus', 'Abra a câmera antes de gravar.');
     return;
   }
-
-  m = trimmed.match(/Maximo\s*=\s*([0-9]+(?:[\.,][0-9]+)?)/i);
-  if(m && current){
-    const v = Number(m[1].replace(',','.'));
-    current.pdMax = v;
-    finalizeCurrent();
-    return;
-  }
-
-  if(/Valores maximos/i.test(trimmed)){
-    finalMaxListMode = true;
-    finalMaxListIndex = 1;
-    finalizeCurrent();
-    renderResults();
-    return;
+  try {
+    recordedChunks = [];
+    let options = {};
+    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) options.mimeType = 'video/webm;codecs=vp9';
+    else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) options.mimeType = 'video/webm;codecs=vp8';
+    else if (MediaRecorder.isTypeSupported('video/webm')) options.mimeType = 'video/webm';
+    mediaRecorder = new MediaRecorder(liveStream, options);
+    mediaRecorder.ondataavailable = (ev) => {
+      if (ev.data && ev.data.size > 0) recordedChunks.push(ev.data);
+    };
+    mediaRecorder.onstop = () => {
+      lastVideoBlob = new Blob(recordedChunks, {type: mediaRecorder.mimeType || 'video/webm'});
+      if (lastVideoUrl) URL.revokeObjectURL(lastVideoUrl);
+      lastVideoUrl = URL.createObjectURL(lastVideoBlob);
+      setStatus('liveStatus', `Vídeo preparado para exportação (${(lastVideoBlob.size/1024/1024).toFixed(2)} MB).`);
+      updatePills();
+    };
+    mediaRecorder.start();
+    setStatus('liveStatus', 'Gravação do vídeo iniciada.');
+    updatePills();
+  } catch (err) {
+    setStatus('liveStatus', 'Erro ao iniciar gravação: ' + err.message);
   }
 }
-async function connectSerial(){
-  if(!('serial' in navigator)){alert('Web Serial não está disponível. Use Chrome ou Edge em https ou localhost.'); return;}
-  try{
+
+function stopVideoRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    setStatus('liveStatus', 'Gravação parada. Preparando vídeo...');
+  }
+  updatePills();
+}
+
+function downloadBlob(blob, filename) {
+  if (!blob) return;
+  const a = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function downloadText(text, filename, type='text/csv;charset=utf-8') {
+  downloadBlob(new Blob([text], {type}), filename);
+}
+
+function exportVideo() {
+  if (!lastVideoBlob) {
+    setStatus('liveStatus', 'Nenhum vídeo preparado para exportar.');
+    return;
+  }
+  const name = safeName($('runName').value) + '_' + nowSafe() + '.webm';
+  downloadBlob(lastVideoBlob, name);
+}
+
+function detectPeaks(data, key) {
+  const n = Math.max(1, parseInt($('expectedPeaks').value || '5', 10));
+  const minGap = Math.max(0, Number($('minPeakGap').value || 0));
+  const sorted = data
+    .filter(row => Number.isFinite(row[key]) && Number.isFinite(row.t))
+    .slice()
+    .sort((a, b) => b[key] - a[key]);
+
+  const selected = [];
+  for (const row of sorted) {
+    if (selected.every(p => Math.abs(p.t - row.t) >= minGap)) {
+      selected.push(row);
+      if (selected.length >= n) break;
+    }
+  }
+  return selected.sort((a, b) => a.t - b.t);
+}
+
+function combinePeaks(data) {
+  const gp = detectPeaks(data, 'g');
+  const bp = detectPeaks(data, 'b');
+  const n = Math.max(gp.length, bp.length, parseInt($('expectedPeaks').value || '5', 10));
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    out.push({
+      rep: i + 1,
+      tg: gp[i]?.t ?? NaN,
+      g: gp[i]?.g ?? NaN,
+      tb: bp[i]?.t ?? NaN,
+      b: bp[i]?.b ?? NaN
+    });
+  }
+  return out;
+}
+
+function stat(values) {
+  const vals = values.filter(Number.isFinite);
+  const n = vals.length;
+  if (!n) return {n: 0, mean: NaN, sd: NaN, cv: NaN};
+  const mean = vals.reduce((a,b) => a+b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(vals.reduce((s,v) => s + (v-mean)**2, 0) / (n-1)) : 0;
+  const cv = mean ? sd / mean * 100 : NaN;
+  return {n, mean, sd, cv};
+}
+
+function renderSummary(id, peaks) {
+  const g = stat(peaks.map(p => p.g));
+  const b = stat(peaks.map(p => p.b));
+  $(id).innerHTML = `
+    <div class="metric"><div class="name">Média G</div><div class="value">${fmt(g.mean, 3)}</div></div>
+    <div class="metric"><div class="name">DP G / CV G</div><div class="value">${fmt(g.sd, 3)} / ${fmt(g.cv, 2)}%</div></div>
+    <div class="metric"><div class="name">Média B</div><div class="value">${fmt(b.mean, 3)}</div></div>
+    <div class="metric"><div class="name">DP B / CV B</div><div class="value">${fmt(b.sd, 3)} / ${fmt(b.cv, 2)}%</div></div>
+  `;
+}
+
+function appendRowsLimited(tbody, rows, renderRow, maxRows=500) {
+  tbody.innerHTML = '';
+  const step = rows.length > maxRows ? Math.ceil(rows.length / maxRows) : 1;
+  for (let i = 0; i < rows.length; i += step) {
+    tbody.insertAdjacentHTML('beforeend', renderRow(rows[i]));
+  }
+}
+
+function renderLiveRgbTable() {
+  appendRowsLimited($('liveRgbTable').querySelector('tbody'), liveRgbData,
+    r => `<tr><td>${fmt(r.t, 3)}</td><td>${fmt(r.g, 3)}</td><td>${fmt(r.b, 3)}</td></tr>`);
+}
+
+function renderPeakTable(tableId, peaks) {
+  const tb = $(tableId).querySelector('tbody');
+  tb.innerHTML = '';
+  peaks.forEach(p => {
+    tb.insertAdjacentHTML('beforeend',
+      `<tr><td>Rep ${p.rep}</td><td>${fmt(p.tg, 3)}</td><td>${fmt(p.g, 3)}</td><td>${fmt(p.tb, 3)}</td><td>${fmt(p.b, 3)}</td></tr>`);
+  });
+}
+
+function renderLiveTables() {
+  renderLiveRgbTable();
+  renderPeakTable('liveMaxTable', livePeaks);
+  renderSummary('liveSummary', livePeaks);
+}
+
+function calcLivePeaks() {
+  livePeaks = combinePeaks(liveRgbData);
+  renderLiveTables();
+  setStatus('liveStatus', 'Máximos RGB calculados para a aquisição ao vivo.');
+}
+
+function csvLive() {
+  const name = safeName($('runName').value);
+  const meta = [
+    ['tipo','aquisicao_ao_vivo_rgb'],
+    ['nome', name],
+    ['roi_x', fmtDot(liveRoi.x, 3)],
+    ['roi_y', fmtDot(liveRoi.y, 3)],
+    ['roi_diametro_px', $('roiDiameter').value],
+    ['intervalo_s', $('sampleInterval').value],
+    ['picos_esperados', $('expectedPeaks').value],
+    ['intervalo_min_pico_s', $('minPeakGap').value],
+    []
+  ];
+  let lines = meta.map(r => r.join(';'));
+  lines.push('Perfil RGB');
+  lines.push('tempo_s;G;B;pixels');
+  liveRgbData.forEach(r => lines.push(`${fmtDot(r.t)};${fmtDot(r.g)};${fmtDot(r.b)};${r.pixels}`));
+  lines.push('');
+  lines.push('Maximos por replicata');
+  lines.push('rep;tempo_max_G_s;max_G;tempo_max_B_s;max_B');
+  livePeaks.forEach(p => lines.push(`${p.rep};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));
+  return lines.join('\n');
+}
+
+function exportLiveCsv() {
+  if (!liveRgbData.length) {
+    setStatus('liveStatus', 'Não há dados RGB ao vivo para exportar.');
+    return;
+  }
+  const filename = safeName($('runName').value) + `_RGB_ao_vivo_ROI${$('roiDiameter').value}_${String($('sampleInterval').value).replace('.','p')}s.csv`;
+  downloadText(csvLive(), filename);
+}
+
+async function connectSerial() {
+  if (!('serial' in navigator)) {
+    setStatus('serialStatus', 'Web Serial não está disponível. Use Chrome ou Edge.');
+    return;
+  }
+  try {
     serialPort = await navigator.serial.requestPort();
     await serialPort.open({ baudRate: 9600 });
-    document.getElementById('serialStatus').textContent='Serial conectada'; document.getElementById('serialStatus').className='status ok';
-    log('Serial conectada em 9600 baud.');
-    serialKeepReading=true;
-    const decoder = new TextDecoderStream();
-    serialPort.readable.pipeTo(decoder.writable).catch(()=>{});
-    serialReader = decoder.readable.getReader();
-    while(serialKeepReading){
-      const {value, done}=await serialReader.read();
-      if(done) break;
-      if(value){
-        serialBuffer += value;
-        const lines = serialBuffer.split(/\r?\n/);
-        serialBuffer = lines.pop();
-        lines.forEach(parseSerialLine);
-      }
-    }
-  }catch(err){alert('Erro na Serial: '+err.message); log('Erro Serial: '+err.message);}
+    serialKeepReading = true;
+    updatePills();
+    setStatus('serialStatus', 'Serial conectado.');
+    readSerialLoop();
+  } catch (err) {
+    setStatus('serialStatus', 'Erro ao conectar serial: ' + err.message);
+    serialPort = null;
+    updatePills();
+  }
 }
-async function disconnectSerial(){
-  try{
-    serialKeepReading=false;
-    if(serialReader){await serialReader.cancel(); serialReader.releaseLock(); serialReader=null;}
-    if(serialPort){await serialPort.close(); serialPort=null;}
-  }catch(e){}
-  document.getElementById('serialStatus').textContent='Serial desconectada'; document.getElementById('serialStatus').className='status bad';
-}
-document.getElementById('btnConnectSerial').onclick=connectSerial;
-document.getElementById('btnDisconnectSerial').onclick=disconnectSerial;
 
-function renderResults(){
-  const tb=document.querySelector('#resultsTable tbody'); tb.innerHTML='';
-  results.sort((a,b)=>a.rep-b.rep).forEach(r=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>Rep ${r.rep}</td><td>${fmt(r.pdTime,2)}</td><td>${fmt(r.pdMax,2)}</td><td>${fmt(r.gTime,2)}</td><td>${fmt(r.gMax,3)}</td><td>${fmt(r.bTime,2)}</td><td>${fmt(r.bMax,3)}</td>`;
-    tb.appendChild(tr);
-  });
+async function disconnectSerial() {
+  serialKeepReading = false;
+  try {
+    if (serialReader) {
+      await serialReader.cancel();
+      serialReader.releaseLock();
+      serialReader = null;
+    }
+    if (serialPort) await serialPort.close();
+  } catch (err) {}
+  serialPort = null;
+  updatePills();
+  setStatus('serialStatus', 'Serial desconectado.');
 }
-function tableText(){
-  const header=['Replicata','Tempo_max_fotodiodo_s','Max_fotodiodo','Tempo_max_G_s','Max_G','Tempo_max_B_s','Max_B'];
-  const lines=[header.join('\t')];
-  results.sort((a,b)=>a.rep-b.rep).forEach(r=>lines.push([r.rep,fmtDot(r.pdTime,2),fmtDot(r.pdMax,2),fmtDot(r.gTime,2),fmtDot(r.gMax,3),fmtDot(r.bTime,2),fmtDot(r.bMax,3)].join('\t')));
+
+async function readSerialLoop() {
+  const decoder = new TextDecoderStream();
+  const readableClosed = serialPort.readable.pipeTo(decoder.writable);
+  serialReader = decoder.readable.getReader();
+  try {
+    while (serialKeepReading) {
+      const { value, done } = await serialReader.read();
+      if (done) break;
+      if (value) handleSerialText(value);
+    }
+  } catch (err) {
+    setStatus('serialStatus', 'Leitura serial encerrada: ' + err.message);
+  } finally {
+    try { serialReader.releaseLock(); } catch (e) {}
+  }
+}
+
+function handleSerialText(txt) {
+  serialTextBuffer += txt;
+  const lines = serialTextBuffer.split(/\r?\n/);
+  serialTextBuffer = lines.pop() || '';
+  for (const line of lines) parseSerialLine(line.trim());
+}
+
+function parseSerialLine(line) {
+  if (!line) return;
+  // formatos aceitos:
+  // 9.12 : 830.14
+  // 9,12 : 830,14
+  // Maximo = 830.14
+  // lista "Valores maximos" seguida de números
+  const normalized = line.replace(',', '.');
+
+  const timeMatch = normalized.match(/(-?\d+(?:\.\d+)?)\s*[:;]\s*(-?\d+(?:\.\d+)?)/);
+  if (timeMatch) {
+    pdData.push({t: Number(timeMatch[1]), y: Number(timeMatch[2])});
+    renderPdTables();
+    return;
+  }
+
+  const maxMatch = normalized.match(/max(?:imo|imum)?\s*=?\s*(-?\d+(?:\.\d+)?)/i);
+  if (maxMatch) {
+    pdMaxima.push(Number(maxMatch[1]));
+    renderPdTables();
+    return;
+  }
+
+  const onlyNumber = normalized.match(/^(-?\d+(?:\.\d+)?)$/);
+  if (onlyNumber) {
+    // números isolados após "Valores máximos" são tratados como máximos do fotodiodo
+    pdMaxima.push(Number(onlyNumber[1]));
+    renderPdTables();
+  }
+}
+
+function renderPdTables() {
+  appendRowsLimited($('pdTable').querySelector('tbody'), pdData,
+    r => `<tr><td>${fmt(r.t, 3)}</td><td>${fmt(r.y, 3)}</td></tr>`);
+  const tb = $('pdMaxTable').querySelector('tbody');
+  tb.innerHTML = '';
+  pdMaxima.forEach((v, i) => tb.insertAdjacentHTML('beforeend', `<tr><td>Rep ${i+1}</td><td>${fmt(v, 3)}</td></tr>`));
+}
+
+function clearSerialData() {
+  pdData = [];
+  pdMaxima = [];
+  renderPdTables();
+}
+
+function csvPd() {
+  const name = safeName($('runName').value);
+  let lines = [
+    `tipo;fotodiodo_serial`,
+    `nome;${name}`,
+    '',
+    'Perfil fotodiodo',
+    'tempo_s;fotodiodo'
+  ];
+  pdData.forEach(r => lines.push(`${fmtDot(r.t)};${fmtDot(r.y)}`));
+  lines.push('');
+  lines.push('Maximos fotodiodo');
+  lines.push('rep;max_fotodiodo');
+  pdMaxima.forEach((v, i) => lines.push(`${i+1};${fmtDot(v)}`));
   return lines.join('\n');
 }
-function renderTemporal(){
-  const tb=document.querySelector('#temporalTable tbody');
-  if(!tb) return;
-  tb.innerHTML='';
-  const rows = alignedRows.slice(-250);
-  rows.forEach(r=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>Rep ${r.rep}</td><td>${fmt(r.tPd,2)}</td><td>${fmt(r.pd,2)}</td><td>${fmt(r.tRgb,2)}</td><td>${fmt(r.G,3)}</td><td>${fmt(r.B,3)}</td><td>${fmt(r.delta,3)}</td>`;
-    tb.appendChild(tr);
+
+function exportPdCsv() {
+  if (!pdData.length && !pdMaxima.length) {
+    setStatus('serialStatus', 'Não há dados do fotodiodo para exportar.');
+    return;
+  }
+  const filename = safeName($('runName').value) + '_fotodiodo_serial.csv';
+  downloadText(csvPd(), filename);
+}
+
+function clearLiveData() {
+  liveRgbData = [];
+  livePeaks = [];
+  renderLiveTables();
+}
+
+function loadVideoForReprocessing() {
+  const f = $('videoFileInput').files[0];
+  if (!f) {
+    setStatus('reStatus', 'Selecione um vídeo primeiro.');
+    return;
+  }
+  const url = URL.createObjectURL(f);
+  reprocessVideo.src = url;
+  reprocessVideo.onloadedmetadata = () => {
+    centerRoi(reprocessVideo, reRoi);
+    reRoi.locked = false;
+    drawRoi(reprocessVideo, reprocessOverlay, reRoi);
+    setStatus('reStatus', `Vídeo carregado: ${f.name}. Duração: ${fmt(reprocessVideo.duration, 2)} s.`);
+  };
+}
+
+async function seekVideo(video, t) {
+  return new Promise((resolve, reject) => {
+    const onSeeked = () => {
+      video.removeEventListener('seeked', onSeeked);
+      resolve();
+    };
+    video.addEventListener('seeked', onSeeked);
+    video.currentTime = Math.min(Math.max(0, t), Math.max(0, video.duration || t));
   });
 }
-function temporalText(){
-  const header=['Replicata','Tempo_fotodiodo_s','Fotodiodo','Tempo_RGB_mais_proximo_s','G','B','Delta_t_RGB_menos_fotodiodo_s'];
-  const lines=[header.join('\t')];
-  alignedRows.forEach(r=>lines.push([r.rep,fmtDot(r.tPd,2),fmtDot(r.pd,2),fmtDot(r.tRgb,2),fmtDot(r.G,3),fmtDot(r.B,3),fmtDot(r.delta,3)].join('\t')));
+
+async function processLoadedVideo() {
+  if (!reprocessVideo.src || !Number.isFinite(reprocessVideo.duration)) {
+    setStatus('reStatus', 'Carregue um vídeo antes de reprocessar.');
+    return;
+  }
+  if (!reRoi.locked) {
+    setStatus('reStatus', 'Trave o ROI de reprocessamento antes de processar.');
+    return;
+  }
+  const interval = Math.max(0.01, Number($('sampleInterval').value || 0.1));
+  const duration = reprocessVideo.duration;
+  reRgbData = [];
+  rePeaks = [];
+  renderReTables();
+  setStatus('reStatus', 'Reprocessando vídeo...');
+
+  reprocessVideo.pause();
+  for (let t = 0; t <= duration; t += interval) {
+    await seekVideo(reprocessVideo, t);
+    const val = meanGBFromVideo(reprocessVideo, reRoi);
+    if (val) reRgbData.push({t, g: val.g, b: val.b, pixels: val.pixels});
+    if (reRgbData.length % 20 === 0) {
+      setStatus('reStatus', `Reprocessando... ${fmt(t, 1)} / ${fmt(duration, 1)} s`);
+      await new Promise(r => setTimeout(r, 0));
+    }
+  }
+  rePeaks = combinePeaks(reRgbData);
+  renderReTables();
+  setStatus('reStatus', `Reprocessamento concluído: ${reRgbData.length} frames analisados.`);
+}
+
+function renderReRgbTable() {
+  appendRowsLimited($('reRgbTable').querySelector('tbody'), reRgbData,
+    r => `<tr><td>${fmt(r.t, 3)}</td><td>${fmt(r.g, 3)}</td><td>${fmt(r.b, 3)}</td></tr>`);
+}
+
+function renderReTables() {
+  renderReRgbTable();
+  renderPeakTable('reMaxTable', rePeaks);
+  renderSummary('reSummary', rePeaks);
+}
+
+function clearReData() {
+  reRgbData = [];
+  rePeaks = [];
+  renderReTables();
+}
+
+function csvRe() {
+  const file = $('videoFileInput').files[0]?.name || '';
+  const name = safeName($('runName').value);
+  const meta = [
+    ['tipo','reprocessamento_video_rgb'],
+    ['nome', name],
+    ['video', file],
+    ['roi_x', fmtDot(reRoi.x, 3)],
+    ['roi_y', fmtDot(reRoi.y, 3)],
+    ['roi_diametro_px', $('roiDiameter').value],
+    ['intervalo_s', $('sampleInterval').value],
+    ['picos_esperados', $('expectedPeaks').value],
+    ['intervalo_min_pico_s', $('minPeakGap').value],
+    []
+  ];
+  let lines = meta.map(r => r.join(';'));
+  lines.push('Perfil RGB reprocessado');
+  lines.push('tempo_s;G;B;pixels');
+  reRgbData.forEach(r => lines.push(`${fmtDot(r.t)};${fmtDot(r.g)};${fmtDot(r.b)};${r.pixels}`));
+  lines.push('');
+  lines.push('Maximos por replicata');
+  lines.push('rep;tempo_max_G_s;max_G;tempo_max_B_s;max_B');
+  rePeaks.forEach(p => lines.push(`${p.rep};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));
   return lines.join('\n');
 }
-document.getElementById('btnCopyTable').onclick=async()=>{await navigator.clipboard.writeText(tableText()); alert('Tabela copiada.');};
-document.getElementById('btnCSV').onclick=()=>{
-  const csv = tableText().replaceAll('\t',';');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='resultados_rgb_fotodiodo.csv'; a.click(); URL.revokeObjectURL(a.href);
-};
-document.getElementById('btnCopyTemporal').onclick=async()=>{await navigator.clipboard.writeText(temporalText()); alert('Perfil temporal copiado.');};
-document.getElementById('btnTemporalCSV').onclick=()=>{
-  const csv = temporalText().replaceAll('\t',';');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='perfil_temporal_rgb_fotodiodo.csv'; a.click(); URL.revokeObjectURL(a.href);
-};
-window.addEventListener('resize', drawOverlay);
-video.addEventListener('loadedmetadata', updateOverlaySize);
+
+function exportReCsv() {
+  if (!reRgbData.length) {
+    setStatus('reStatus', 'Não há dados reprocessados para exportar.');
+    return;
+  }
+  const name = safeName($('runName').value);
+  const filename = `${name}_REPROCESSADO_ROI${$('roiDiameter').value}_${String($('sampleInterval').value).replace('.','p')}s.csv`;
+  downloadText(csvRe(), filename);
+}
+
+$('listCamerasBtn').onclick = listCameras;
+$('openCameraBtn').onclick = openCamera;
+$('closeCameraBtn').onclick = closeCamera;
+
+$('lockRoiBtn').onclick = () => { liveRoi.locked = true; drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); };
+$('unlockRoiBtn').onclick = () => { liveRoi.locked = false; drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); };
+$('centerRoiBtn').onclick = () => { liveRoi.locked = false; centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); };
+
+$('startRgbBtn').onclick = startRgb;
+$('stopRgbBtn').onclick = () => { stopRgb(); setStatus('liveStatus', 'Registro RGB parado.'); };
+$('clearLiveBtn').onclick = clearLiveData;
+$('startVideoRecBtn').onclick = startVideoRecording;
+$('stopVideoRecBtn').onclick = stopVideoRecording;
+$('downloadVideoBtn').onclick = exportVideo;
+$('calcLivePeaksBtn').onclick = calcLivePeaks;
+$('exportLiveCsvBtn').onclick = exportLiveCsv;
+
+$('connectSerialBtn').onclick = connectSerial;
+$('disconnectSerialBtn').onclick = disconnectSerial;
+$('clearSerialBtn').onclick = clearSerialData;
+$('exportPdCsvBtn').onclick = exportPdCsv;
+
+$('loadVideoBtn').onclick = loadVideoForReprocessing;
+$('setFrameBtn').onclick = () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
+$('lockRoiReBtn').onclick = () => { reRoi.locked = true; drawRoi(reprocessVideo, reprocessOverlay, reRoi); setStatus('reStatus', `ROI travado: x=${Math.round(reRoi.x)}, y=${Math.round(reRoi.y)}, d=${$('roiDiameter').value}px.`); };
+$('unlockRoiReBtn').onclick = () => { reRoi.locked = false; drawRoi(reprocessVideo, reprocessOverlay, reRoi); setStatus('reStatus', 'ROI destravado.'); };
+$('centerRoiReBtn').onclick = () => { reRoi.locked = false; centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
+$('processVideoBtn').onclick = processLoadedVideo;
+$('exportReCsvBtn').onclick = exportReCsv;
+$('clearReBtn').onclick = clearReData;
+
+liveVideo.addEventListener('loadedmetadata', () => { centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); });
+reprocessVideo.addEventListener('loadedmetadata', () => { centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); });
+reprocessVideo.addEventListener('timeupdate', () => drawRoi(reprocessVideo, reprocessOverlay, reRoi));
+liveVideo.addEventListener('play', () => drawRoi(liveVideo, liveOverlay, liveRoi));
+
+updatePills();
+renderLiveTables();
+renderReTables();
+renderPdTables();
+
 </script>
 </body>
 </html>
