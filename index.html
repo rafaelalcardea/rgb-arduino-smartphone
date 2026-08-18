@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — aquisição, gravação de vídeo e reprocessamento</h1>
-  <p>Versão para DroidCam/câmera, Web Serial, ROI travado, exportação de vídeo e reprocessamento de G/B.</p>
+  <h1>RGB + Arduino — corrida única, vídeo e reprocessamento</h1>
+  <p>Versão v6: um botão inicia RGB + gravação de vídeo; perfil G/B atualiza automaticamente; fotodiodo fica separado.</p>
 </header>
 
 <main>
@@ -285,17 +285,14 @@
         <button id="centerRoiBtn" class="light">Centralizar ROI</button>
       </div>
 
-      <h3>Registro RGB e gravação do vídeo</h3>
+      <h3>Corrida RGB + gravação do vídeo</h3>
       <div class="row">
-        <button id="startRgbBtn" class="ok">Iniciar registro RGB</button>
-        <button id="stopRgbBtn" class="warn">Parar registro RGB</button>
+        <button id="startRgbBtn" class="ok">Iniciar corrida (RGB + vídeo)</button>
+        <button id="stopRgbBtn" class="warn">Parar corrida</button>
+        <button id="downloadVideoBtn" class="secondary">Exportar último vídeo</button>
         <button id="clearLiveBtn" class="light">Limpar dados ao vivo</button>
       </div>
-      <div class="row">
-        <button id="startVideoRecBtn" class="ok">Iniciar gravação do vídeo</button>
-        <button id="stopVideoRecBtn" class="warn">Parar e preparar vídeo</button>
-        <button id="downloadVideoBtn" class="secondary">Exportar último vídeo</button>
-      </div>
+      <p class="note">Ao iniciar a corrida, o app começa simultaneamente o registro RGB e a gravação do vídeo bruto. O fotodiodo permanece em painel separado apenas para acompanhamento.</p>
       <div id="liveStatus" class="status"></div>
     </div>
 
@@ -342,7 +339,7 @@
         <h3>Perfil RGB ao vivo</h3>
         <div class="tableBox">
           <table id="liveRgbTable">
-            <thead><tr><th>Tempo (s)</th><th>G</th><th>B</th></tr></thead>
+            <thead><tr><th>Tempo RGB (s)</th><th>G</th><th>B</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -445,6 +442,8 @@ let liveRgbData = [];
 let livePeaks = [];
 let liveIntervalTimer = null;
 let liveStartTime = null;
+let liveSampleIndex = 0;
+let liveIntervalSec = 0.1;
 
 let pdData = [];
 let pdMaxima = [];
@@ -661,33 +660,54 @@ function meanGBFromVideo(video, roi) {
 
 function startRgb() {
   if (!liveStream || !liveVideo.videoWidth) {
-    setStatus('liveStatus', 'Abra a câmera antes de iniciar o registro RGB.');
-    return;
+    setStatus('liveStatus', 'Abra a câmera antes de iniciar a corrida.');
+    return false;
   }
   if (!liveRoi.locked) {
-    setStatus('liveStatus', 'Trave o ROI antes de iniciar o registro RGB.');
-    return;
+    setStatus('liveStatus', 'Trave o ROI antes de iniciar a corrida.');
+    return false;
   }
+
   stopRgb();
   liveRgbData = [];
   livePeaks = [];
   renderLiveTables();
+
   liveStartTime = performance.now();
-  const intervalMs = Math.max(10, Number($('sampleInterval').value || 0.1) * 1000);
+  liveSampleIndex = 0;
+  liveIntervalSec = Math.max(0.01, Number($('sampleInterval').value || 0.1));
+  const intervalMs = Math.max(10, liveIntervalSec * 1000);
+
   liveIntervalTimer = setInterval(() => {
     const val = meanGBFromVideo(liveVideo, liveRoi);
     if (!val) return;
-    const t = (performance.now() - liveStartTime) / 1000;
+
+    // Tempo nominal do RGB, definido pelo intervalo escolhido.
+    // Isso evita misturar o tempo do Arduino/fotodiodo com o tempo do smartphone.
+    const t = liveSampleIndex * liveIntervalSec;
+    liveSampleIndex++;
+
     liveRgbData.push({t, g: val.g, b: val.b, pixels: val.pixels});
-    if (liveRgbData.length % 5 === 0) renderLiveRgbTable();
+
+    // Atualização automática na tela durante a corrida.
+    livePeaks = combinePeaks(liveRgbData);
+    renderLiveTables();
+
+    setStatus('liveStatus',
+      `Corrida em andamento — RGB: ${liveRgbData.length} leituras; intervalo nominal: ${liveIntervalSec.toFixed(3).replace('.', ',')} s.`);
   }, intervalMs);
+
   setStatus('liveStatus', 'Registro RGB iniciado.');
+  return true;
 }
 
 function stopRgb() {
   if (liveIntervalTimer) clearInterval(liveIntervalTimer);
   liveIntervalTimer = null;
-  if (liveRgbData.length) renderLiveTables();
+  if (liveRgbData.length) {
+    livePeaks = combinePeaks(liveRgbData);
+    renderLiveTables();
+  }
 }
 
 function startVideoRecording() {
@@ -726,6 +746,24 @@ function stopVideoRecording() {
     setStatus('liveStatus', 'Gravação parada. Preparando vídeo...');
   }
   updatePills();
+}
+
+function startRun() {
+  const ok = startRgb();
+  if (!ok) return;
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+    startVideoRecording();
+  }
+  setStatus('liveStatus', 'Corrida iniciada: RGB + gravação de vídeo.');
+}
+
+function stopRun() {
+  stopRgb();
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopVideoRecording();
+  }
+  calcLivePeaks();
+  setStatus('liveStatus', 'Corrida parada. RGB calculado e vídeo preparado para exportação.');
 }
 
 function downloadBlob(blob, filename) {
@@ -1130,11 +1168,9 @@ $('lockRoiBtn').onclick = () => { liveRoi.locked = true; drawRoi(liveVideo, live
 $('unlockRoiBtn').onclick = () => { liveRoi.locked = false; drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); };
 $('centerRoiBtn').onclick = () => { liveRoi.locked = false; centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); updatePills(); };
 
-$('startRgbBtn').onclick = startRgb;
-$('stopRgbBtn').onclick = () => { stopRgb(); setStatus('liveStatus', 'Registro RGB parado.'); };
+$('startRgbBtn').onclick = startRun;
+$('stopRgbBtn').onclick = stopRun;
 $('clearLiveBtn').onclick = clearLiveData;
-$('startVideoRecBtn').onclick = startVideoRecording;
-$('stopVideoRecBtn').onclick = stopVideoRecording;
 $('downloadVideoBtn').onclick = exportVideo;
 $('calcLivePeaksBtn').onclick = calcLivePeaks;
 $('exportLiveCsvBtn').onclick = exportLiveCsv;
