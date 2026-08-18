@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — corrida única, vídeo e reprocessamento v8</h1>
-  <p>Versão v8: intervalo RGB/reprocessamento vinculado; se usar 0,1 s, reprocessa em 0,1 s; se usar 0,05 s, reprocessa em 0,05 s.</p>
+  <h1>RGB + Arduino — corrida única, vídeo e reprocessamento v9</h1>
+  <p>Versão v9: intervalo RGB/reprocessamento vinculado; ao carregar outro vídeo, o ROI de reprocessamento permanece no mesmo local e só muda se você quiser.</p>
 </header>
 
 <main>
@@ -567,6 +567,16 @@ function centerRoi(video, roi) {
     roi.x = video.videoWidth / 2;
     roi.y = video.videoHeight / 2;
   }
+}
+
+function clampRoiToVideo(video, roi) {
+  if (!video.videoWidth || !video.videoHeight) return;
+  if (!Number.isFinite(roi.x) || !Number.isFinite(roi.y) || (roi.x === 0 && roi.y === 0)) {
+    centerRoi(video, roi);
+    return;
+  }
+  roi.x = Math.max(0, Math.min(video.videoWidth, roi.x));
+  roi.y = Math.max(0, Math.min(video.videoHeight, roi.y));
 }
 
 function setupRoiInteraction(video, canvas, roi, afterMove) {
@@ -1097,10 +1107,16 @@ function loadVideoForReprocessing() {
   const url = URL.createObjectURL(f);
   reprocessVideo.src = url;
   reprocessVideo.onloadedmetadata = () => {
-    centerRoi(reprocessVideo, reRoi);
-    reRoi.locked = false;
+    const hadRoi = Number.isFinite(reRoi.x) && Number.isFinite(reRoi.y) && !(reRoi.x === 0 && reRoi.y === 0);
+    if (hadRoi) {
+      clampRoiToVideo(reprocessVideo, reRoi);
+    } else {
+      centerRoi(reprocessVideo, reRoi);
+      reRoi.locked = false;
+    }
     drawRoi(reprocessVideo, reprocessOverlay, reRoi);
-    setStatus('reStatus', `Vídeo carregado: ${f.name}. Duração: ${fmt(reprocessVideo.duration, 2)} s.`);
+    const lockTxt = reRoi.locked ? 'ROI mantido travado no mesmo local.' : 'ROI mantido no mesmo local.';
+    setStatus('reStatus', `Vídeo carregado: ${f.name}. Duração: ${fmt(reprocessVideo.duration, 2)} s. ${lockTxt}`);
   };
 }
 
@@ -1252,7 +1268,7 @@ $('exportReCsvBtn').onclick = exportReCsv;
 $('clearReBtn').onclick = clearReData;
 
 liveVideo.addEventListener('loadedmetadata', () => { centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); });
-reprocessVideo.addEventListener('loadedmetadata', () => { centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
+reprocessVideo.addEventListener('loadedmetadata', () => { clampRoiToVideo(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
 reprocessVideo.addEventListener('timeupdate', () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
 liveVideo.addEventListener('play', () => drawRoi(liveVideo, liveOverlay, liveRoi));
 
