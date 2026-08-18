@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — corrida única, vídeo e reprocessamento</h1>
-  <p>Versão v6: um botão inicia RGB + gravação de vídeo; perfil G/B atualiza automaticamente; fotodiodo fica separado.</p>
+  <h1>RGB + Arduino — corrida única, vídeo e reprocessamento v8</h1>
+  <p>Versão v8: intervalo RGB/reprocessamento vinculado; se usar 0,1 s, reprocessa em 0,1 s; se usar 0,05 s, reprocessa em 0,05 s.</p>
 </header>
 
 <main>
@@ -235,14 +235,6 @@
       <div class="field">
         <label for="runName">Nome da amostra/corrida</label>
         <input id="runName" value="H2O2_hexa_5mM" />
-      </div>
-      <div class="field small">
-        <label for="roiDiameter">Diâmetro ROI (px)</label>
-        <input id="roiDiameter" type="number" value="55" min="3" step="1" />
-      </div>
-      <div class="field small">
-        <label for="sampleInterval">Intervalo RGB (s)</label>
-        <input id="sampleInterval" type="number" value="0.1" min="0.01" step="0.001" />
       </div>
       <div class="field small">
         <label for="expectedPeaks">Nº de picos</label>
@@ -258,6 +250,7 @@
       <span id="cameraInfo" class="pill">Câmera fechada</span>
       <span id="serialInfo" class="pill">Serial desconectado</span>
       <span id="recordInfo" class="pill">Vídeo não gravando</span>
+      <span id="intervalInfo" class="pill ok">Intervalo RGB/reproc: 0,1 s</span>
     </div>
   </section>
 
@@ -274,15 +267,24 @@
         <button id="closeCameraBtn" class="secondary">Fechar câmera</button>
       </div>
 
-      <div class="videoWrap" id="liveWrap">
-        <video id="liveVideo" playsinline muted></video>
-        <canvas id="liveOverlay" class="overlay"></canvas>
-      </div>
-
-      <div class="row" style="margin-top:10px">
+      <h3>Configuração do smartphone</h3>
+      <div class="row">
+        <div class="field small">
+          <label for="roiDiameter">Diâmetro ROI (px)</label>
+          <input id="roiDiameter" type="number" value="55" min="3" step="1" />
+        </div>
+        <div class="field small">
+          <label for="sampleInterval">Intervalo RGB/reprocessamento (s)</label>
+          <input id="sampleInterval" type="number" value="0.1" min="0.01" step="0.001" />
+        </div>
         <button id="lockRoiBtn" class="ok">Travar ROI</button>
         <button id="unlockRoiBtn" class="warn">Destravar ROI</button>
         <button id="centerRoiBtn" class="light">Centralizar ROI</button>
+      </div>
+
+      <div class="videoWrap" id="liveWrap">
+        <video id="liveVideo" playsinline muted></video>
+        <canvas id="liveOverlay" class="overlay"></canvas>
       </div>
 
       <h3>Corrida RGB + gravação do vídeo</h3>
@@ -297,7 +299,7 @@
     </div>
 
     <div class="card">
-      <h2>Arduino / fotodiodo</h2>
+      <h2>Arduino / fotodiodo — apenas acompanhamento</h2>
       <div class="row">
         <button id="connectSerialBtn">Conectar Arduino</button>
         <button id="disconnectSerialBtn" class="secondary">Desconectar</button>
@@ -362,7 +364,10 @@
 
   <section class="card">
     <h2>Reprocessamento de vídeo salvo</h2>
-    <p class="note">Carregue um vídeo .webm/.mp4, selecione/trave o ROI no preview, escolha o diâmetro e o intervalo entre frames, depois clique em reprocessar. O centro do ROI permanece travado; você pode mudar apenas o diâmetro para testar 110, 55, 27 etc.</p>
+    <p class="note">Carregue um vídeo .webm/.mp4, use a barra para ir até um frame com emissão, selecione/trave o ROI e clique em reprocessar. O intervalo usado no reprocessamento é o mesmo campo “Intervalo RGB/reprocessamento (s)” da configuração do smartphone. Assim, 0,1 s gera pontos a cada 0,1 s; 0,05 s gera pontos a cada 0,05 s.</p>
+    <div class="row">
+      <span id="reIntervalInfo" class="pill ok">Reprocessamento: intervalo 0,1 s</span>
+    </div>
     <div class="row">
       <div class="field">
         <label for="videoFileInput">Carregar vídeo salvo</label>
@@ -375,6 +380,18 @@
     <div class="videoWrap" id="reprocessWrap">
       <video id="reprocessVideo" playsinline controls muted></video>
       <canvas id="reprocessOverlay" class="overlay"></canvas>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="rePlayPauseBtn" class="light">Play/Pause</button>
+      <div class="field">
+        <label for="reSeek">Passar vídeo para escolher o frame do ROI</label>
+        <input id="reSeek" type="range" min="0" max="0" value="0" step="0.01" />
+      </div>
+      <div class="field small">
+        <label>Tempo do vídeo</label>
+        <input id="reTimeLabel" value="0,00 / 0,00 s" readonly />
+      </div>
     </div>
 
     <div class="row" style="margin-top:10px">
@@ -478,6 +495,21 @@ function updatePills() {
 
   $('recordInfo').className = mediaRecorder && mediaRecorder.state === 'recording' ? 'pill ok' : 'pill';
   $('recordInfo').textContent = mediaRecorder && mediaRecorder.state === 'recording' ? 'Vídeo gravando' : 'Vídeo não gravando';
+
+  updateIntervalUi();
+}
+
+function getRgbIntervalSec() {
+  const v = Number($('sampleInterval').value || 0.1);
+  return Math.max(0.01, v);
+}
+
+function updateIntervalUi() {
+  const interval = getRgbIntervalSec();
+  const txt = interval.toFixed(3).replace('.', ',').replace(/0+$/, '').replace(/,$/, '');
+  if ($('intervalInfo')) $('intervalInfo').textContent = `Intervalo RGB/reproc: ${txt} s`;
+  if ($('reIntervalInfo')) $('reIntervalInfo').textContent = `Reprocessamento: intervalo ${txt} s`;
+  if ($('reSeek')) $('reSeek').step = String(interval);
 }
 
 function videoSize(video) {
@@ -560,6 +592,11 @@ $('roiDiameter').addEventListener('input', () => {
   drawRoi(liveVideo, liveOverlay, liveRoi);
   drawRoi(reprocessVideo, reprocessOverlay, reRoi);
   updatePills();
+});
+
+$('sampleInterval').addEventListener('input', () => {
+  updateIntervalUi();
+  updateReSeekUi();
 });
 
 async function listCameras() {
@@ -675,7 +712,7 @@ function startRgb() {
 
   liveStartTime = performance.now();
   liveSampleIndex = 0;
-  liveIntervalSec = Math.max(0.01, Number($('sampleInterval').value || 0.1));
+  liveIntervalSec = getRgbIntervalSec();
   const intervalMs = Math.max(10, liveIntervalSec * 1000);
 
   liveIntervalTimer = setInterval(() => {
@@ -848,9 +885,11 @@ function renderSummary(id, peaks) {
 }
 
 function appendRowsLimited(tbody, rows, renderRow, maxRows=500) {
+  // Mostra as últimas linhas reais, sem "pular" pontos.
+  // Assim, se o intervalo RGB for 0,1 s, a tabela exibida continua em 0,1 s.
   tbody.innerHTML = '';
-  const step = rows.length > maxRows ? Math.ceil(rows.length / maxRows) : 1;
-  for (let i = 0; i < rows.length; i += step) {
+  const start = Math.max(0, rows.length - maxRows);
+  for (let i = start; i < rows.length; i++) {
     tbody.insertAdjacentHTML('beforeend', renderRow(rows[i]));
   }
 }
@@ -1085,7 +1124,7 @@ async function processLoadedVideo() {
     setStatus('reStatus', 'Trave o ROI de reprocessamento antes de processar.');
     return;
   }
-  const interval = Math.max(0.01, Number($('sampleInterval').value || 0.1));
+  const interval = getRgbIntervalSec();
   const duration = reprocessVideo.duration;
   reRgbData = [];
   rePeaks = [];
@@ -1093,18 +1132,20 @@ async function processLoadedVideo() {
   setStatus('reStatus', 'Reprocessando vídeo...');
 
   reprocessVideo.pause();
-  for (let t = 0; t <= duration; t += interval) {
+  const totalSteps = Math.floor(duration / interval);
+  for (let i = 0; i <= totalSteps; i++) {
+    const t = i * interval;
     await seekVideo(reprocessVideo, t);
     const val = meanGBFromVideo(reprocessVideo, reRoi);
     if (val) reRgbData.push({t, g: val.g, b: val.b, pixels: val.pixels});
     if (reRgbData.length % 20 === 0) {
-      setStatus('reStatus', `Reprocessando... ${fmt(t, 1)} / ${fmt(duration, 1)} s`);
+      setStatus('reStatus', `Reprocessando com intervalo ${interval.toFixed(3).replace('.', ',')} s... ${fmt(t, 1)} / ${fmt(duration, 1)} s`);
       await new Promise(r => setTimeout(r, 0));
     }
   }
   rePeaks = combinePeaks(reRgbData);
   renderReTables();
-  setStatus('reStatus', `Reprocessamento concluído: ${reRgbData.length} frames analisados.`);
+  setStatus('reStatus', `Reprocessamento concluído: ${reRgbData.length} pontos RGB analisados com intervalo de ${interval.toFixed(3).replace('.', ',')} s.`);
 }
 
 function renderReRgbTable() {
@@ -1160,6 +1201,25 @@ function exportReCsv() {
   downloadText(csvRe(), filename);
 }
 
+
+function updateReSeekUi() {
+  const seek = $('reSeek');
+  const label = $('reTimeLabel');
+  const dur = Number.isFinite(reprocessVideo.duration) ? reprocessVideo.duration : 0;
+  seek.max = dur ? String(dur) : '0';
+  seek.value = String(reprocessVideo.currentTime || 0);
+  label.value = `${fmt(reprocessVideo.currentTime || 0, 2)} / ${fmt(dur, 2)} s`;
+}
+
+function toggleRePlayPause() {
+  if (!reprocessVideo.src) {
+    setStatus('reStatus', 'Carregue um vídeo antes de usar Play/Pause.');
+    return;
+  }
+  if (reprocessVideo.paused) reprocessVideo.play();
+  else reprocessVideo.pause();
+}
+
 $('listCamerasBtn').onclick = listCameras;
 $('openCameraBtn').onclick = openCamera;
 $('closeCameraBtn').onclick = closeCamera;
@@ -1181,6 +1241,8 @@ $('clearSerialBtn').onclick = clearSerialData;
 $('exportPdCsvBtn').onclick = exportPdCsv;
 
 $('loadVideoBtn').onclick = loadVideoForReprocessing;
+$('rePlayPauseBtn').onclick = toggleRePlayPause;
+$('reSeek').oninput = () => { reprocessVideo.currentTime = Number($('reSeek').value || 0); updateReSeekUi(); drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
 $('setFrameBtn').onclick = () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); };
 $('lockRoiReBtn').onclick = () => { reRoi.locked = true; drawRoi(reprocessVideo, reprocessOverlay, reRoi); setStatus('reStatus', `ROI travado: x=${Math.round(reRoi.x)}, y=${Math.round(reRoi.y)}, d=${$('roiDiameter').value}px.`); };
 $('unlockRoiReBtn').onclick = () => { reRoi.locked = false; drawRoi(reprocessVideo, reprocessOverlay, reRoi); setStatus('reStatus', 'ROI destravado.'); };
@@ -1190,11 +1252,12 @@ $('exportReCsvBtn').onclick = exportReCsv;
 $('clearReBtn').onclick = clearReData;
 
 liveVideo.addEventListener('loadedmetadata', () => { centerRoi(liveVideo, liveRoi); drawRoi(liveVideo, liveOverlay, liveRoi); });
-reprocessVideo.addEventListener('loadedmetadata', () => { centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); });
-reprocessVideo.addEventListener('timeupdate', () => drawRoi(reprocessVideo, reprocessOverlay, reRoi));
+reprocessVideo.addEventListener('loadedmetadata', () => { centerRoi(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
+reprocessVideo.addEventListener('timeupdate', () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); });
 liveVideo.addEventListener('play', () => drawRoi(liveVideo, liveOverlay, liveRoi));
 
 updatePills();
+updateIntervalUi();
 renderLiveTables();
 renderReTables();
 renderPdTables();
