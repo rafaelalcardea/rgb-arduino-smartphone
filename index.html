@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11b</h1>
-  <p>Versão v11b: correção do terminador dos comandos seriais; comandos Arduino; START inicia RGB + vídeo + Arduino; mostra dimensões do vídeo e posição relativa do ROI.</p>
+  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11d</h1>
+  <p>Versão v11d: replicatas do fotodiodo e RGB sincronizadas com o Arduino; cada nova corrida começa com os resultados vazios.</p>
 </header>
 
 <main>
@@ -465,6 +465,8 @@ let serialPort = null;
 let serialReader = null;
 let serialKeepReading = false;
 let serialTextBuffer = '';
+let serialCurrentRep = null;
+let liveUseSerialReplicates = false;
 
 let liveRoi = {x: 0, y: 0, locked: false};
 let reRoi = {x: 0, y: 0, locked: false};
@@ -493,6 +495,39 @@ const reCtx = reCanvas.getContext('2d', { willReadFrequently: true });
 
 function setStatus(id, msg) {
   $(id).textContent = msg || '';
+}
+
+function expectedPeakCount() {
+  return Math.max(1, parseInt($('expectedPeaks').value || '5', 10));
+}
+
+function emptyPeakRows() {
+  const n = expectedPeakCount();
+  return Array.from({length: n}, (_, i) => ({
+    rep: i + 1,
+    tg: NaN,
+    g: NaN,
+    tb: NaN,
+    b: NaN
+  }));
+}
+
+function emptyPdMaxima() {
+  return Array(expectedPeakCount()).fill(NaN);
+}
+
+function resetCurrentRunData() {
+  // Cada nova corrida começa sem valores da corrida anterior.
+  pdData = [];
+  pdMaxima = emptyPdMaxima();
+  serialCurrentRep = null;
+  liveUseSerialReplicates = false;
+
+  liveRgbData = [];
+  livePeaks = emptyPeakRows();
+
+  renderPdTables();
+  renderLiveTables();
 }
 
 
@@ -664,7 +699,22 @@ $('sampleInterval').addEventListener('input', () => {
 });
 
 $('expectedPeaks').addEventListener('input', () => {
+  const n = expectedPeakCount();
+
+  // Ajusta a quantidade de posições sem carregar valores extras.
+  const oldPd = pdMaxima.slice(0, n);
+  pdMaxima = Array(n).fill(NaN);
+  oldPd.forEach((v, i) => { if (Number.isFinite(v)) pdMaxima[i] = v; });
+
+  const oldLive = livePeaks.slice(0, n);
+  livePeaks = emptyPeakRows();
+  oldLive.forEach((p, i) => {
+    if (!p) return;
+    livePeaks[i] = {...livePeaks[i], ...p, rep: i + 1};
+  });
+
   renderPdTables();
+  renderLiveTables();
 });
 
 async function listCameras() {
@@ -774,9 +824,7 @@ function startRgb() {
   }
 
   stopRgb();
-  liveRgbData = [];
-  livePeaks = [];
-  renderLiveTables();
+  resetCurrentRunData();
 
   liveStartTime = performance.now();
   liveSampleIndex = 0;
@@ -794,8 +842,26 @@ function startRgb() {
 
     liveRgbData.push({t, g: val.g, b: val.b, pixels: val.pixels});
 
-    // Atualização automática na tela durante a corrida.
-    livePeaks = combinePeaks(liveRgbData);
+    // Quando o Arduino informa a replicata atual, o RGB é associado
+    // diretamente à mesma Rep 1, Rep 2, ... Rep N. Assim cada linha é
+    // preenchida em sequência e os máximos G e B são atualizados
+    // independentemente dentro da própria replicata.
+    if (liveUseSerialReplicates && Number.isInteger(serialCurrentRep)) {
+      const idx = serialCurrentRep - 1;
+      if (idx >= 0 && idx < expectedPeakCount()) {
+        const p = livePeaks[idx] || {rep: serialCurrentRep, tg: NaN, g: NaN, tb: NaN, b: NaN};
+        if (!Number.isFinite(p.g) || val.g > p.g) {
+          p.g = val.g;
+          p.tg = t;
+        }
+        if (!Number.isFinite(p.b) || val.b > p.b) {
+          p.b = val.b;
+          p.tb = t;
+        }
+        livePeaks[idx] = p;
+      }
+    }
+
     renderLiveTables();
 
     setStatus('liveStatus',
@@ -810,7 +876,12 @@ function stopRgb() {
   if (liveIntervalTimer) clearInterval(liveIntervalTimer);
   liveIntervalTimer = null;
   if (liveRgbData.length) {
-    livePeaks = combinePeaks(liveRgbData);
+    // No modo sincronizado com o Arduino, os máximos já foram acumulados
+    // dentro de cada replicata e não devem ser substituídos por uma nova
+    // busca global ao parar a corrida.
+    if (!liveUseSerialReplicates) {
+      livePeaks = combinePeaks(liveRgbData);
+    }
     renderLiveTables();
   }
 }
@@ -944,11 +1015,17 @@ function stat(values) {
 function renderSummary(id, peaks) {
   const g = stat(peaks.map(p => p.g));
   const b = stat(peaks.map(p => p.b));
+
+  const gMean = g.n ? fmt(g.mean, 3) : '—';
+  const gSdCv = g.n ? `${fmt(g.sd, 3)} / ${fmt(g.cv, 2)}%` : '—';
+  const bMean = b.n ? fmt(b.mean, 3) : '—';
+  const bSdCv = b.n ? `${fmt(b.sd, 3)} / ${fmt(b.cv, 2)}%` : '—';
+
   $(id).innerHTML = `
-    <div class="metric"><div class="name">Média G</div><div class="value">${fmt(g.mean, 3)}</div></div>
-    <div class="metric"><div class="name">DP G / CV G</div><div class="value">${fmt(g.sd, 3)} / ${fmt(g.cv, 2)}%</div></div>
-    <div class="metric"><div class="name">Média B</div><div class="value">${fmt(b.mean, 3)}</div></div>
-    <div class="metric"><div class="name">DP B / CV B</div><div class="value">${fmt(b.sd, 3)} / ${fmt(b.cv, 2)}%</div></div>
+    <div class="metric"><div class="name">Média G</div><div class="value">${gMean}</div></div>
+    <div class="metric"><div class="name">DP G / CV G</div><div class="value">${gSdCv}</div></div>
+    <div class="metric"><div class="name">Média B</div><div class="value">${bMean}</div></div>
+    <div class="metric"><div class="name">DP B / CV B</div><div class="value">${bSdCv}</div></div>
   `;
 }
 
@@ -983,9 +1060,13 @@ function renderLiveTables() {
 }
 
 function calcLivePeaks() {
-  livePeaks = combinePeaks(liveRgbData);
+  if (!liveUseSerialReplicates) {
+    livePeaks = combinePeaks(liveRgbData);
+  }
   renderLiveTables();
-  setStatus('liveStatus', 'Máximos RGB calculados para a aquisição ao vivo.');
+  setStatus('liveStatus', liveUseSerialReplicates
+    ? 'Máximos RGB mantidos por replicata sincronizada com o Arduino.'
+    : 'Máximos RGB calculados para a aquisição ao vivo.');
 }
 
 function csvLive() {
@@ -1123,13 +1204,44 @@ function handleSerialText(txt) {
 
 function parseSerialLine(line) {
   if (!line) return;
-  // formatos aceitos:
-  // 9.12 : 830.14
-  // 9,12 : 830,14
-  // Maximo = 830.14
-  // lista "Valores maximos" seguida de números
   const normalized = line.replace(',', '.');
 
+  // O Arduino anuncia explicitamente o início de uma nova sequência.
+  // Limpamos apenas os dados do fotodiodo aqui; o RGB já é limpo quando
+  // o botão de início da corrida é acionado no app.
+  if (/^Inicio da sequencia analitica/i.test(normalized)) {
+    pdData = [];
+    pdMaxima = emptyPdMaxima();
+    serialCurrentRep = null;
+    renderPdTables();
+    return;
+  }
+
+  // Usa o número de replicata informado pelo próprio Arduino para manter
+  // fotodiodo e RGB sincronizados: Rep 1, Rep 2, ...
+  const repMatch = normalized.match(/replicata\s*=\s*(\d+)/i);
+  if (repMatch) {
+    const rep = Number(repMatch[1]);
+    if (Number.isInteger(rep) && rep >= 1 && rep <= expectedPeakCount()) {
+      serialCurrentRep = rep;
+
+      // Ao receber a primeira replicata, passa o RGB para o modo
+      // sincronizado e remove qualquer detecção provisória anterior.
+      if (liveIntervalTimer && !liveUseSerialReplicates) {
+        liveUseSerialReplicates = true;
+        livePeaks = emptyPeakRows();
+        renderLiveTables();
+      }
+    }
+    return;
+  }
+
+  if (/^Fim da sequencia analitica/i.test(normalized)) {
+    serialCurrentRep = null;
+    return;
+  }
+
+  // Perfil do fotodiodo: tempo : sinal
   const timeMatch = normalized.match(/(-?\d+(?:\.\d+)?)\s*[:;]\s*(-?\d+(?:\.\d+)?)/);
   if (timeMatch) {
     pdData.push({t: Number(timeMatch[1]), y: Number(timeMatch[2])});
@@ -1137,18 +1249,24 @@ function parseSerialLine(line) {
     return;
   }
 
-  const maxMatch = normalized.match(/max(?:imo|imum)?\s*=?\s*(-?\d+(?:\.\d+)?)/i);
+  // Cada replicata já imprime uma linha "Maximo = ...". É esta linha que
+  // alimenta as Rep 1..N. A lista final "Valores maximos" do Arduino é
+  // deliberadamente ignorada para não duplicar as cinco replicatas.
+  const maxMatch = normalized.match(/max(?:imo|imum)?\s*=\s*(-?\d+(?:\.\d+)?)/i);
   if (maxMatch) {
-    pdMaxima.push(Number(maxMatch[1]));
-    renderPdTables();
-    return;
-  }
+    const value = Number(maxMatch[1]);
+    const n = expectedPeakCount();
 
-  const onlyNumber = normalized.match(/^(-?\d+(?:\.\d+)?)$/);
-  if (onlyNumber) {
-    // números isolados após "Valores máximos" são tratados como máximos do fotodiodo
-    pdMaxima.push(Number(onlyNumber[1]));
-    renderPdTables();
+    let idx = Number.isInteger(serialCurrentRep) ? serialCurrentRep - 1 : -1;
+    if (idx < 0 || idx >= n) {
+      idx = pdMaxima.findIndex(v => !Number.isFinite(v));
+    }
+
+    if (idx >= 0 && idx < n) {
+      pdMaxima[idx] = value;
+      renderPdTables();
+    }
+    return;
   }
 }
 
@@ -1156,19 +1274,19 @@ function renderPdTables() {
   appendRowsLimited($('pdTable').querySelector('tbody'), pdData,
     r => `<tr><td>${fmt(r.t, 3)}</td><td>${fmt(r.y, 3)}</td></tr>`);
 
+  const expected = expectedPeakCount();
   const tb = $('pdMaxTable').querySelector('tbody');
   tb.innerHTML = '';
-  pdMaxima.forEach((v, i) => tb.insertAdjacentHTML('beforeend', `<tr><td>Rep ${i+1}</td><td>${fmt(v, 3)}</td></tr>`));
+  for (let i = 0; i < expected; i++) {
+    const v = pdMaxima[i];
+    const value = Number.isFinite(v) ? fmt(v, 3) : '—';
+    tb.insertAdjacentHTML('beforeend', `<tr><td>Rep ${i+1}</td><td>${value}</td></tr>`);
+  }
 
-  // Mostra as replicatas também no espaço abaixo do botão de exportação.
-  // Os cartões aparecem desde o início e são preenchidos sucessivamente
-  // conforme os máximos chegam pela serial do Arduino.
   const repBox = $('pdRepSummary');
   if (repBox) {
-    const expected = Math.max(1, parseInt($('expectedPeaks').value || '5', 10));
-    const total = Math.max(expected, pdMaxima.length);
     let html = '';
-    for (let i = 0; i < total; i++) {
+    for (let i = 0; i < expected; i++) {
       const value = Number.isFinite(pdMaxima[i]) ? fmt(pdMaxima[i], 3) : '—';
       html += `<div class="metric"><div class="name">Rep ${i+1}</div><div class="value">${value}</div></div>`;
     }
@@ -1178,7 +1296,8 @@ function renderPdTables() {
 
 function clearSerialData() {
   pdData = [];
-  pdMaxima = [];
+  pdMaxima = emptyPdMaxima();
+  serialCurrentRep = null;
   renderPdTables();
 }
 
@@ -1195,7 +1314,7 @@ function csvPd() {
   lines.push('');
   lines.push('Maximos fotodiodo');
   lines.push('rep;max_fotodiodo');
-  pdMaxima.forEach((v, i) => lines.push(`${i+1};${fmtDot(v)}`));
+  pdMaxima.forEach((v, i) => lines.push(`${i+1};${Number.isFinite(v) ? fmtDot(v) : ''}`));
   return lines.join('\n');
 }
 
@@ -1210,7 +1329,8 @@ function exportPdCsv() {
 
 function clearLiveData() {
   liveRgbData = [];
-  livePeaks = [];
+  livePeaks = emptyPeakRows();
+  liveUseSerialReplicates = false;
   renderLiveTables();
 }
 
@@ -1395,6 +1515,10 @@ liveVideo.addEventListener('loadedmetadata', () => { centerRoi(liveVideo, liveRo
 reprocessVideo.addEventListener('loadedmetadata', () => { clampRoiToVideo(reprocessVideo, reRoi); drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); updatePills(); });
 reprocessVideo.addEventListener('timeupdate', () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); updatePills(); });
 liveVideo.addEventListener('play', () => drawRoi(liveVideo, liveOverlay, liveRoi));
+
+// Estado inicial: cinco posições vazias (ou o número escolhido pelo usuário).
+pdMaxima = emptyPdMaxima();
+livePeaks = emptyPeakRows();
 
 updatePills();
 updateIntervalUi();
