@@ -224,8 +224,8 @@
 </head>
 <body>
 <header>
-  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11d</h1>
-  <p>Versão v11e: máximos RGB atualizados em tempo real por replicata; tabela do perfil otimizada; cada nova corrida começa vazia.</p>
+  <h1>RGB + Arduino — comandos Arduino, ROI relativo e dimensões v11f</h1>
+  <p>Versão v11f: reprocessamento acompanha corretamente o número de picos; padrão de 5 replicatas restaurado ao abrir; máximos do fotodiodo alinhados abaixo do perfil.</p>
 </header>
 
 <main>
@@ -238,7 +238,7 @@
       </div>
       <div class="field small">
         <label for="expectedPeaks">Nº de picos</label>
-        <input id="expectedPeaks" type="number" value="5" min="1" step="1" />
+        <input id="expectedPeaks" type="number" value="5" min="1" step="1" autocomplete="off" />
       </div>
       <div class="field small">
         <label for="minPeakGap">Intervalo mín. pico (s)</label>
@@ -318,31 +318,25 @@
       <p class="note">Os botões enviam comandos pela serial. Para funcionarem, o programa do Arduino precisa reconhecer os comandos: LAVA_REAGENTES, LAVA_PERCURSO e START. O botão START inicia primeiro o RGB + vídeo e, em seguida, envia START ao Arduino para reduzir o risco de perder o início do sinal.</p>
 
       <p class="note">O perfil do serial fica separado do RGB. Aqui aparecem apenas dados do fotodiodo lidos do Arduino.</p>
-      <div class="tables">
-        <div>
-          <h3>Perfil fotodiodo</h3>
-          <div class="tableBox">
-            <table id="pdTable">
-              <thead><tr><th>Tempo (s)</th><th>Fotodiodo</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div>
-          <h3>Máximos do fotodiodo</h3>
-          <div class="tableBox">
-            <table id="pdMaxTable">
-              <thead><tr><th>Rep</th><th>Máx. fotodiodo</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
+      <div>
+        <h3>Perfil fotodiodo</h3>
+        <div class="tableBox">
+          <table id="pdTable">
+            <thead><tr><th>Tempo (s)</th><th>Fotodiodo</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
       <div class="row" style="margin-top:10px">
         <button id="exportPdCsvBtn" class="secondary">Exportar CSV fotodiodo</button>
       </div>
-      <h3 style="margin-top:10px">Replicatas do fotodiodo — corrida atual</h3>
-      <div class="summary" id="pdRepSummary"></div>
+      <h3 style="margin-top:10px">Máximos do fotodiodo</h3>
+      <div class="tableBox" style="max-width:620px">
+        <table id="pdMaxTable">
+          <thead><tr><th>Rep</th><th>Máx. fotodiodo</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
       <div id="serialStatus" class="status"></div>
     </div>
   </section>
@@ -713,8 +707,13 @@ $('expectedPeaks').addEventListener('input', () => {
     livePeaks[i] = {...livePeaks[i], ...p, rep: i + 1};
   });
 
+  // O reprocessamento também deve acompanhar imediatamente o número escolhido.
+  // Se já houver vídeo processado, recalcula; caso contrário mostra as posições vazias.
+  rePeaks = reRgbData.length ? combinePeaks(reRgbData) : emptyPeakRows();
+
   renderPdTables();
   renderLiveTables();
+  renderReTables();
 });
 
 async function listCameras() {
@@ -1368,6 +1367,9 @@ function loadVideoForReprocessing() {
   }
   const url = URL.createObjectURL(f);
   reprocessVideo.src = url;
+  reRgbData = [];
+  rePeaks = emptyPeakRows();
+  renderReTables();
   reprocessVideo.onloadedmetadata = () => {
     const hadRoi = Number.isFinite(reRoi.x) && Number.isFinite(reRoi.y) && !(reRoi.x === 0 && reRoi.y === 0);
     if (hadRoi) {
@@ -1406,9 +1408,9 @@ async function processLoadedVideo() {
   const interval = getRgbIntervalSec();
   const duration = reprocessVideo.duration;
   reRgbData = [];
-  rePeaks = [];
+  rePeaks = emptyPeakRows();
   renderReTables();
-  setStatus('reStatus', 'Reprocessando vídeo...');
+  setStatus('reStatus', `Reprocessando vídeo... procurando ${expectedPeakCount()} replicatas.`);
 
   reprocessVideo.pause();
   const totalSteps = Math.floor(duration / interval);
@@ -1424,7 +1426,10 @@ async function processLoadedVideo() {
   }
   rePeaks = combinePeaks(reRgbData);
   renderReTables();
-  setStatus('reStatus', `Reprocessamento concluído: ${reRgbData.length} pontos RGB analisados com intervalo de ${interval.toFixed(3).replace('.', ',')} s.`);
+  const nExp = expectedPeakCount();
+  const foundG = rePeaks.filter(p => Number.isFinite(p.g)).length;
+  const foundB = rePeaks.filter(p => Number.isFinite(p.b)).length;
+  setStatus('reStatus', `Reprocessamento concluído: ${reRgbData.length} pontos RGB analisados com intervalo de ${interval.toFixed(3).replace('.', ',')} s. Replicatas: G ${foundG}/${nExp}; B ${foundB}/${nExp}.`);
 }
 
 function renderReRgbTable() {
@@ -1440,7 +1445,7 @@ function renderReTables() {
 
 function clearReData() {
   reRgbData = [];
-  rePeaks = [];
+  rePeaks = emptyPeakRows();
   renderReTables();
 }
 
@@ -1542,9 +1547,12 @@ reprocessVideo.addEventListener('loadedmetadata', () => { clampRoiToVideo(reproc
 reprocessVideo.addEventListener('timeupdate', () => { drawRoi(reprocessVideo, reprocessOverlay, reRoi); updateReSeekUi(); updatePills(); });
 liveVideo.addEventListener('play', () => drawRoi(liveVideo, liveOverlay, liveRoi));
 
-// Estado inicial: cinco posições vazias (ou o número escolhido pelo usuário).
+// Estado inicial: restaura explicitamente 5 replicatas. Alguns navegadores
+// preservam o valor anterior de campos numéricos após atualizar a página.
+$('expectedPeaks').value = '5';
 pdMaxima = emptyPdMaxima();
 livePeaks = emptyPeakRows();
+rePeaks = emptyPeakRows();
 
 updatePills();
 updateIntervalUi();
