@@ -175,7 +175,125 @@ function findDeltaRoiCandidate(video,diameter){
   }
   return{x:bx/scale,y:by/scale,score:best};
 }
-async function autoRoi(video,roi,diameter,canvas){if(!video.videoWidth){alert('A fonte de vídeo ainda não está pronta.');return}const p=findBrightestRoiCandidate(video,diameter);if(!p)return;roi.x=p.x;roi.y=p.y;roi.valid=true;roi.locked=true;drawRoi(video,canvas,roi)}
+async function autoRoi(video,roi,diameter,canvas){
+  if(!videoFiles.length){alert('Adicione e selecione um vídeo antes de usar a ROI automática.');return}
+  if(!video.videoWidth||!finite(video.duration)||video.duration<=0){
+    alert('O vídeo ainda não está pronto para a seleção automática da ROI.');
+    return;
+  }
+
+  const btn=$('reRoiAuto');
+  const lockBtn=$('reRoiLock');
+  const originalText='Selecionar ROI automaticamente';
+  btn.disabled=true;
+  btn.classList.add('roiActive');
+  btn.textContent='Procurando ROI...';
+  lockBtn.classList.remove('roiLocked');
+  lockBtn.textContent='Travar ROI';
+  roi.locked=false;
+
+  const dur=video.duration;
+  const savedTime=video.currentTime||0;
+  video.pause();
+
+  try{
+    $('reProgress').textContent='ROI automática: registrando o fundo do vídeo...';
+
+    const maxW=320;
+    const scale=Math.min(1,maxW/video.videoWidth);
+    const w=Math.max(80,Math.round(video.videoWidth*scale));
+    const h=Math.max(60,Math.round(video.videoHeight*scale));
+    const c=document.createElement('canvas');
+    c.width=w;c.height=h;
+    const ctx=c.getContext('2d',{willReadFrequently:true});
+
+    // Baseline: média de três frames iniciais.
+    const acc=new Float32Array(w*h*3);
+    const baselineTimes=[0,Math.min(0.10,dur),Math.min(0.20,dur)];
+    for(const t of baselineTimes){
+      await seekVideo(video,t);
+      ctx.drawImage(video,0,0,w,h);
+      const d=ctx.getImageData(0,0,w,h).data;
+      for(let i=0,j=0;i<d.length;i+=4){
+        acc[j++]+=d[i];
+        acc[j++]+=d[i+1];
+        acc[j++]+=d[i+2];
+      }
+    }
+    for(let i=0;i<acc.length;i++)acc[i]/=baselineTimes.length;
+
+    const rad=Math.max(2,diameter*scale/2);
+    const spatialStep=Math.max(2,Math.round(rad/2));
+    // Até ~250 frames de busca para não deixar vídeos longos excessivamente lentos.
+    const requestedDt=Math.max(0.05,Number($('reFrameInterval').value)||0.10);
+    const scanDt=Math.max(requestedDt,dur/250);
+
+    let best={score:-Infinity,x:w/2,y:h/2,t:0};
+    let frameCount=0;
+    const total=Math.max(1,Math.ceil(dur/scanDt)+1);
+
+    for(let t=0;t<=dur+1e-8;t+=scanDt){
+      await seekVideo(video,Math.min(t,dur));
+      ctx.drawImage(video,0,0,w,h);
+      const cur=ctx.getImageData(0,0,w,h).data;
+
+      for(let y=Math.ceil(rad);y<h-rad;y+=spatialStep){
+        for(let x=Math.ceil(rad);x<w-rad;x+=spatialStep){
+          let sum=0,n=0;
+          for(let yy=-rad;yy<=rad;yy+=1){
+            for(let xx=-rad;xx<=rad;xx+=1){
+              if(xx*xx+yy*yy>rad*rad)continue;
+              const px=Math.round(x+xx),py=Math.round(y+yy);
+              const p=py*w+px,ci=p*4,bi=p*3;
+              const bmean=(acc[bi]+acc[bi+1]+acc[bi+2])/3;
+              const cmean=(cur[ci]+cur[ci+1]+cur[ci+2])/3;
+              const delta=Math.max(0,cmean-bmean);
+              // Dá menos peso a regiões já claras no fundo, como textos/watermarks.
+              const weight=Math.max(0.08,1-bmean/255);
+              sum+=delta*weight;
+              n++;
+            }
+          }
+          const score=n?sum/n:0;
+          if(score>best.score)best={score,x,y,t:Math.min(t,dur)};
+        }
+      }
+
+      frameCount++;
+      if(frameCount%5===0||frameCount===total){
+        $('reProgress').textContent=`ROI automática: analisando o vídeo ${Math.min(100,Math.round(100*frameCount/total))}%`;
+      }
+    }
+
+    if(!finite(best.score)||best.score<AUTO_ROI_MIN_DELTA){
+      await seekVideo(video,savedTime);
+      drawRoi(video,canvas,roi);
+      btn.classList.remove('roiActive');
+      btn.textContent=originalText;
+      $('reProgress').textContent='Não foi detectado aumento de emissão suficiente para posicionar a ROI automaticamente.';
+      return;
+    }
+
+    roi.x=best.x/scale;
+    roi.y=best.y/scale;
+    roi.valid=true;
+    roi.locked=false;
+
+    // Mostra justamente o frame em que a melhor região foi encontrada.
+    await seekVideo(video,best.t);
+    drawRoi(video,canvas,roi);
+
+    btn.classList.add('roiActive');
+    btn.textContent='✓ ROI automática encontrada';
+    $('reProgress').textContent=`ROI automática posicionada no maior aumento de emissão (t = ${best.t.toFixed(2)} s; ΔRGB = ${best.score.toFixed(1)}). Confira e clique em “Travar ROI”.`;
+  }catch(err){
+    btn.classList.remove('roiActive');
+    btn.textContent=originalText;
+    $('reProgress').textContent='Erro na seleção automática da ROI: '+err.message;
+  }finally{
+    btn.disabled=false;
+  }
+}
 function applyLiveAutoRoiCandidate(){
   if(!liveAutoRoiEnabled||liveRoi.locked||!$('liveVideo').videoWidth||!liveAutoBaseline)return false;
   const p=findDeltaRoiCandidate($('liveVideo'),roiDiameterFor('live'));
@@ -214,7 +332,10 @@ $('liveRoiManual').onclick=()=>{setLiveAutoRoi(false);liveRoi.locked=false;$('li
 $('liveRoiAuto').onclick=()=>setLiveAutoRoi(true);
 $('liveRoiLock').onclick=()=>{if(!liveRoi.valid){alert('Defina primeiro a posição da ROI.');return}liveRoi.locked=true;liveAutoRoiEnabled=false;$('liveRoiAuto').classList.remove('roiActive');$('liveRoiAuto').setAttribute('aria-pressed','false');$('liveRoiAuto').textContent='Selecionar ROI automaticamente';$('liveRoiLock').classList.add('roiLocked');$('liveRoiLock').textContent='🔒 ROI travada';drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);$('liveProgress').textContent='ROI travada. A posição e o diâmetro serão mantidos nas próximas análises.'};
 $('liveRoiClear').onclick=()=>{setLiveAutoRoi(false);clearRoi(liveRoi,$('liveOverlay'));$('liveRoiLock').classList.remove('roiLocked');$('liveRoiLock').textContent='Travar ROI';$('liveProgress').textContent='ROI removida.'};
-$('reRoiManual').onclick=()=>{reRoi.locked=false;if(!reRoi.valid)centerRoi($('reVideo'),reRoi);drawRoi($('reVideo'),$('reOverlay'),reRoi)};$('reRoiAuto').onclick=()=>autoRoi($('reVideo'),reRoi,roiDiameterFor('re'),$('reOverlay'));$('reRoiLock').onclick=()=>{reRoi.locked=true;drawRoi($('reVideo'),$('reOverlay'),reRoi)};$('reRoiClear').onclick=()=>clearRoi(reRoi,$('reOverlay'));
+$('reRoiManual').onclick=()=>{reRoi.locked=false;$('reRoiAuto').classList.remove('roiActive');$('reRoiAuto').textContent='Selecionar ROI automaticamente';$('reRoiLock').classList.remove('roiLocked');$('reRoiLock').textContent='Travar ROI';if(!reRoi.valid)centerRoi($('reVideo'),reRoi);drawRoi($('reVideo'),$('reOverlay'),reRoi);$('reProgress').textContent='ROI manual selecionada.'};
+$('reRoiAuto').onclick=()=>autoRoi($('reVideo'),reRoi,roiDiameterFor('re'),$('reOverlay'));
+$('reRoiLock').onclick=()=>{if(!reRoi.valid){alert('Defina primeiro a posição da ROI.');return}reRoi.locked=true;$('reRoiAuto').classList.remove('roiActive');$('reRoiAuto').textContent='Selecionar ROI automaticamente';$('reRoiLock').classList.add('roiLocked');$('reRoiLock').textContent='🔒 ROI travada';drawRoi($('reVideo'),$('reOverlay'),reRoi);$('reProgress').textContent='ROI travada para o reprocessamento.'};
+$('reRoiClear').onclick=()=>{clearRoi(reRoi,$('reOverlay'));$('reRoiAuto').classList.remove('roiActive');$('reRoiAuto').textContent='Selecionar ROI automaticamente';$('reRoiLock').classList.remove('roiLocked');$('reRoiLock').textContent='Travar ROI';$('reProgress').textContent='ROI removida.'};
 function drawTemporal(canvasId,data,channels){const c=$(canvasId),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.max(300,Math.round(rect.width||600)),h=Math.max(220,Math.round(rect.height||360));c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.fillStyle='#fff';x.fillRect(0,0,w,h);const m={l:52,r:18,t:30,b:42};x.strokeStyle='#cdd5df';x.lineWidth=1;x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();x.fillStyle='#475467';x.font='12px Arial';x.fillText('Sinal (contagens)',7,18);x.fillText('Tempo (s)',w-72,h-12);for(let v=0;v<=255;v+=51){const py=h-m.b-v/255*(h-m.t-m.b);x.fillStyle='#667085';x.fillText(String(v),m.l-34,py+4);x.strokeStyle='#eef1f6';x.beginPath();x.moveTo(m.l,py);x.lineTo(w-m.r,py);x.stroke()}if(!data.length){x.fillStyle='#98a2b3';x.fillText('Sem dados',m.l+15,m.t+22);return}const xs=data.map(d=>d.t).filter(finite);if(!xs.length)return;const xmax=Math.max(...xs)||1,X=t=>m.l+t/xmax*(w-m.l-m.r),Y=v=>h-m.b-clamp(v,0,255)/255*(h-m.t-m.b),colors={r:'#dc2626',g:'#16a34a',b:'#2563eb'};channels.forEach(k=>{x.strokeStyle=colors[k];x.lineWidth=1.8;x.beginPath();let start=true;data.forEach(d=>{if(!finite(d[k]))return;const px=X(d.t),py=Y(d[k]);if(start){x.moveTo(px,py);start=false}else x.lineTo(px,py)});x.stroke()});const legendStep=55,legendWidth=channels.length*legendStep;let lx=Math.max(m.l+135,w-m.r-legendWidth);channels.forEach(k=>{x.fillStyle=colors[k];x.fillRect(lx,10,18,3);x.fillStyle='#344054';x.fillText(k.toUpperCase(),lx+24,15);lx+=legendStep})}
 function detectPeaks(data,nRep,gap,channels,windows=[]){if(!data.length)return[];if(windows.length)return windows.slice(0,nRep).map((win,i)=>{const seg=data.filter(d=>d.t>=win.start&&(!finite(win.end)||d.t<=win.end)),out={rep:i+1};channels.forEach(k=>{let best=null;seg.forEach(d=>{if(finite(d[k])&&(!best||d[k]>best[k]))best=d});out[k]=best?best[k]:NaN;out['t'+k]=best?best.t:NaN});return out});const score=d=>channels.reduce((s,k)=>s+(finite(d[k])?d[k]:0),0),candidates=[];for(let i=1;i<data.length-1;i++){const s=score(data[i]);if(s>=score(data[i-1])&&s>=score(data[i+1]))candidates.push({i,t:data[i].t,s})}candidates.sort((a,b)=>b.s-a.s);const chosen=[];for(const c of candidates){if(chosen.every(p=>Math.abs(p.t-c.t)>=gap)){chosen.push(c);if(chosen.length>=nRep)break}}chosen.sort((a,b)=>a.t-b.t);return chosen.map((p,idx)=>{const half=Math.max(gap/2,.25),seg=data.filter(d=>Math.abs(d.t-p.t)<=half),out={rep:idx+1};channels.forEach(k=>{let best=null;seg.forEach(d=>{if(finite(d[k])&&(!best||d[k]>best[k]))best=d});out[k]=best?best[k]:NaN;out['t'+k]=best?best.t:NaN});return out})}
 function peakSignals(rec,ch){return rec.peaks.map(p=>p[ch]).filter(finite)}
