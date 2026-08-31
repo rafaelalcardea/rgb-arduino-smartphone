@@ -11,527 +11,144 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
-button,input,select{font:inherit}
-button{cursor:pointer}
+button,input,select{font:inherit}button{cursor:pointer}
 .topbar{background:linear-gradient(90deg,#063b99,#0b63e6);color:#fff;padding:12px 18px;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;gap:10px;align-items:center}.brandIcon{font-size:28px}.brand h1{font-size:19px;margin:0}.brand p{font-size:12px;margin:3px 0 0;color:#dbeafe}
 .shell{max-width:1480px;margin:auto;padding:14px}
 .statusbar,.tabs,.card{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px #00000008}
 .statusbar{padding:12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.conn{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;background:#fff}
-.conn.clickable{cursor:pointer}.conn.clickable:hover{background:#f8fbff}.connMain{display:flex;gap:10px;align-items:center}
+.conn{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;background:#fff}.conn.clickable{cursor:pointer}.conn.clickable:hover{background:#f8fbff}.connMain{display:flex;gap:10px;align-items:center}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block}.dot.on{background:var(--green)}
 .connTitle{font-weight:700}.connState{font-size:12px;color:var(--red);margin-top:3px}.connState.on{color:var(--green)}
-.tabs{display:flex;overflow:hidden;margin-bottom:12px}.tab{flex:1;border:0;background:#fff;padding:13px;color:#344054;font-weight:700;border-bottom:3px solid transparent}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue);background:#f8fbff}
+.tabs{display:flex;overflow:hidden;margin-bottom:12px}.tab{flex:1;border:0;background:#fff;padding:13px;color:#344054;font-weight:700;border-bottom:3px solid transparent}.tab.active{color:var(--blue);border-bottom-color:var(--blue);background:#f8fbff}
 .view{display:none}.view.active{display:block}
 .card{padding:14px}.card h2{font-size:16px;color:#0b3f9c;margin:0 0 12px}.card h3{font-size:14px;margin:12px 0 8px}
-.grid3{display:grid;grid-template-columns:1.05fr 1.25fr .95fr;gap:12px}.grid4{display:grid;grid-template-columns:.9fr 1.2fr .8fr 1fr;gap:12px}
-.gridResults{display:grid;grid-template-columns:.9fr 1.2fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1.05fr 1.25fr .95fr;gap:12px}.grid4{display:grid;grid-template-columns:.9fr 1.2fr .8fr 1fr;gap:12px}.gridResults{display:grid;grid-template-columns:.9fr 1.32fr 1fr;gap:12px}
 @media(max-width:980px){.grid3,.grid4,.gridResults,.statusbar{grid-template-columns:1fr}.tabs{position:sticky;top:0;z-index:10}}
-.videoWrap{position:relative;background:#020617;border-radius:10px;overflow:hidden;min-height:300px;display:flex;align-items:center;justify-content:center}
-video{display:block;width:100%;max-height:480px;background:#020617}.overlay{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+.videoWrap{position:relative;background:#020617;border-radius:10px;overflow:hidden;min-height:300px;display:flex;align-items:center;justify-content:center}video{display:block;width:100%;max-height:480px;background:#020617}.overlay{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.spaced{justify-content:space-between}
-.field{margin-bottom:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
-input,select{width:100%;border:1px solid #cfd8e8;border-radius:8px;padding:9px;background:#fff;color:var(--ink)}
+.field{margin-bottom:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}input,select{width:100%;border:1px solid #cfd8e8;border-radius:8px;padding:9px;background:#fff;color:var(--ink)}
 .inline{display:flex;gap:8px;align-items:center}.inline input[type=checkbox],.inline input[type=radio]{width:auto}
-.btn{border:1px solid transparent;border-radius:8px;padding:9px 12px;font-weight:700;background:var(--blue2);color:#fff}
-.btn.secondary{background:#fff;color:var(--blue);border-color:#9dbcf4}.btn.good{background:var(--green)}.btn.stop{background:var(--red)}.btn.muted{background:#64748b}.btn.dangerLight{background:#fff;color:var(--red);border-color:#f5b4b4}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.roiButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.channels{display:flex;gap:16px;flex-wrap:wrap;margin:9px 0}.ch{display:flex;align-items:center;gap:5px;font-weight:700}.ch input{width:auto}
-.chart{width:100%;height:390px;border:1px solid #e4e8f0;border-radius:10px;background:#fff}
-.smallChart{height:280px}
+.btn{border:1px solid transparent;border-radius:8px;padding:9px 12px;font-weight:700;background:var(--blue2);color:#fff}.btn.secondary{background:#fff;color:var(--blue);border-color:#9dbcf4}.btn.good{background:var(--green)}.btn.stop{background:var(--red)}.btn.muted{background:#64748b}.btn.dangerLight{background:#fff;color:var(--red);border-color:#f5b4b4}.btn:disabled{opacity:.45;cursor:not-allowed}
+.roiButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.channels{display:flex;gap:16px;flex-wrap:wrap;margin:9px 0}.ch{display:flex;align-items:center;gap:5px;font-weight:700}.ch input{width:auto}
+.chart{width:100%;height:390px;border:1px solid #e4e8f0;border-radius:10px;background:#fff}.smallChart{height:235px}.calChartLarge{height:360px}
 .log{height:280px;overflow:auto;border:1px solid #e4e8f0;border-radius:8px;background:#fbfcfe;padding:8px;font:12px Consolas,monospace;white-space:pre-wrap}
-.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{border:1px solid #e4e8f0;border-radius:9px;padding:10px;background:#fbfcfe}.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:20px;font-weight:700;margin-top:5px}
-.tableWrap{overflow:auto;border:1px solid #e4e8f0;border-radius:9px;max-height:520px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:8px;border-bottom:1px solid #eef1f6;text-align:left;white-space:nowrap}th{background:#f7f9fc;position:sticky;top:0;z-index:1}
-.recordRow.selected{background:#eef4ff}.classSel{min-width:135px;padding:6px}.trash{border:0;background:transparent;color:#475467;font-size:16px}.trash:hover{color:var(--red)}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{border:1px solid #e4e8f0;border-radius:9px;padding:10px;background:#fbfcfe}.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:20px;font-weight:700;margin-top:5px}.calMetrics{grid-template-columns:repeat(2,1fr)}
+.tableWrap{overflow:auto;border:1px solid #e4e8f0;border-radius:9px;max-height:620px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:8px;border-bottom:1px solid #eef1f6;text-align:left;white-space:nowrap}th{background:#f7f9fc;position:sticky;top:0;z-index:1}.recordRow.selected{background:#eef4ff}.classSel{min-width:135px;padding:6px}.trash{border:0;background:transparent;color:#475467;font-size:16px}.trash:hover{color:var(--red)}
 .videoList{max-height:390px;overflow:auto}.videoItem{display:flex;justify-content:space-between;align-items:center;padding:9px;border-bottom:1px solid #eef1f6}.videoItem.selected{background:#eef4ff}.videoItem button{border:0;background:transparent;color:#344054}
-.note{font-size:12px;color:var(--muted);line-height:1.4}.okText{color:var(--green)}.badText{color:var(--red)}
-.resultHeader{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.channelTabs{display:flex;gap:5px}.channelTabs button{min-width:42px;border:1px solid #cfd8e8;background:#fff;color:#344054;border-radius:7px;padding:6px 10px}.channelTabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.stdPanel{border:1px solid #b7cef8;background:#f8fbff;border-radius:10px;padding:12px;margin-top:12px}.hidden{display:none!important}
-.exportRow{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap}
-.footer{font-size:12px;color:var(--muted);padding:12px 4px;text-align:right}
-.pill{display:inline-flex;gap:6px;align-items:center;background:#eef4ff;color:#174ea6;border-radius:999px;padding:5px 9px;font-size:12px}
-.progress{font-size:12px;color:var(--green);font-weight:700;margin-top:8px}
+.note{font-size:12px;color:var(--muted);line-height:1.4}.okText{color:var(--green)}.badText{color:var(--red)}.resultHeader{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.channelTabs{display:flex;gap:5px}.channelTabs button{min-width:42px;border:1px solid #cfd8e8;background:#fff;color:#344054;border-radius:7px;padding:6px 10px}.channelTabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.stdPanel{border:1px solid #b7cef8;background:#f8fbff;border-radius:10px;padding:12px;margin-top:12px}.hidden{display:none!important}.exportRow{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap}.footer{font-size:12px;color:var(--muted);padding:12px 4px;text-align:right}.pill{display:inline-flex;gap:6px;align-items:center;background:#eef4ff;color:#174ea6;border-radius:999px;padding:5px 9px;font-size:12px}.progress{font-size:12px;color:var(--green);font-weight:700;margin-top:8px}
+.calHint{margin:8px 0 10px;padding:8px 10px;background:#f8fbff;border:1px solid #d7e5ff;border-radius:8px;color:#174ea6;font-size:12px;line-height:1.4}.sectionDivider{height:1px;background:#e8edf5;margin:16px 0}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="brand"><div class="brandIcon">✦</div><div><h1>CL RGB Analyzer</h1><p>Análise de quimioluminescência RGB</p></div></div>
-  <div>?</div>
-</div>
+<div class="topbar"><div class="brand"><div class="brandIcon">✦</div><div><h1>CL RGB Analyzer</h1><p>Análise de quimioluminescência RGB</p></div></div><div>?</div></div>
 <div class="shell">
   <div class="statusbar">
-    <div id="cameraConn" class="conn clickable" title="Clique para conectar ou trocar a câmera">
-      <div class="connMain"><span>📷</span><div><div class="connTitle">Câmera</div><div id="cameraState" class="connState">desconectada</div></div></div><span>›</span>
-    </div>
-    <div id="arduinoConn" class="conn clickable" title="Clique para conectar ou desconectar o Arduino Due">
-      <div class="connMain"><span>▣</span><div><div class="connTitle">Arduino Due</div><div id="arduinoState" class="connState">desconectado</div></div></div><span>›</span>
-    </div>
+    <div id="cameraConn" class="conn clickable" title="Clique para conectar ou trocar a câmera"><div class="connMain"><span>📷</span><div><div class="connTitle">Câmera</div><div id="cameraState" class="connState">desconectada</div></div></div><span>›</span></div>
+    <div id="arduinoConn" class="conn clickable" title="Clique para conectar ou desconectar o Arduino Due"><div class="connMain"><span>▣</span><div><div class="connTitle">Arduino Due</div><div id="arduinoState" class="connState">desconectado</div></div></div><span>›</span></div>
   </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="acq">Aquisição</button>
-    <button class="tab" data-tab="reproc">Reprocessamento</button>
-    <button class="tab" data-tab="results">Resultados</button>
-  </div>
+  <div class="tabs"><button class="tab active" data-tab="acq">Aquisição</button><button class="tab" data-tab="reproc">Reprocessamento</button><button class="tab" data-tab="results">Resultados</button></div>
 
   <section id="view-acq" class="view active">
     <div class="grid3">
-      <div class="card">
-        <h2>Visualização da câmera (ao vivo)</h2>
-        <div class="videoWrap" id="liveWrap"><video id="liveVideo" playsinline muted></video><canvas id="liveOverlay" class="overlay"></canvas></div>
-        <div class="roiButtons">
-          <button id="liveRoiManual" class="btn secondary">Selecionar ROI manualmente</button>
-          <button id="liveRoiAuto" class="btn">Selecionar ROI automaticamente</button>
-        </div>
-        <div class="field" style="margin-top:12px"><label>Diâmetro da ROI (px)</label><input id="liveRoiDiameter" type="number" value="40" min="4" step="1"></div>
-        <div class="row"><button id="liveRoiLock" class="btn secondary">Travar ROI</button><button id="liveRoiClear" class="btn secondary">Limpar ROI</button></div>
-      </div>
-
-      <div class="card">
-        <h2>Perfil temporal RGB</h2>
-        <div class="channels" id="liveChannels">
-          <label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label>
-          <label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label>
-          <label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label>
-        </div>
-        <canvas id="liveChart" class="chart"></canvas>
-        <div id="liveProgress" class="progress"></div>
-      </div>
-
-      <div class="card">
-        <h2>Parâmetros de aquisição</h2>
-        <div class="field"><label>Nome da corrida</label><input id="runName" value="Corrida 001"></div>
-        <div class="field"><label>Número de replicatas</label><input id="liveReplicates" type="number" value="5" min="1" step="1"></div>
-        <div class="field"><label>Intervalo mínimo entre picos (s)</label><input id="livePeakGap" type="number" value="5" min="0" step="0.1"></div>
-        <div class="field"><label>Intervalo entre frames analisados (s)</label><input id="liveFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div>
-        <h3>Modo de operação</h3>
-        <label class="inline"><input type="radio" name="liveMode" value="image">Somente imagem</label>
-        <label class="inline"><input type="radio" name="liveMode" value="arduino" checked>Imagem + Arduino Due</label>
-        <div class="row" style="margin-top:14px"><button id="startLive" class="btn good" style="flex:1">▶ START</button><button id="stopLive" class="btn stop" style="flex:1">■ STOP</button></div>
-        <h3>Log</h3><div id="serialLog" class="log"></div><div class="row" style="margin-top:8px"><button id="clearLog" class="btn secondary">Limpar log</button></div>
-      </div>
+      <div class="card"><h2>Visualização da câmera (ao vivo)</h2><div class="videoWrap" id="liveWrap"><video id="liveVideo" playsinline muted></video><canvas id="liveOverlay" class="overlay"></canvas></div><div class="roiButtons"><button id="liveRoiManual" class="btn secondary">Selecionar ROI manualmente</button><button id="liveRoiAuto" class="btn">Selecionar ROI automaticamente</button></div><div class="field" style="margin-top:12px"><label>Diâmetro da ROI (px)</label><input id="liveRoiDiameter" type="number" value="40" min="4" step="1"></div><div class="row"><button id="liveRoiLock" class="btn secondary">Travar ROI</button><button id="liveRoiClear" class="btn secondary">Limpar ROI</button></div></div>
+      <div class="card"><h2>Perfil temporal RGB</h2><div class="channels" id="liveChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><canvas id="liveChart" class="chart"></canvas><div id="liveProgress" class="progress"></div></div>
+      <div class="card"><h2>Parâmetros de aquisição</h2><div class="field"><label>Nome da corrida</label><input id="runName" value="Corrida 001"></div><div class="field"><label>Número de replicatas</label><input id="liveReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Intervalo mínimo entre picos (s)</label><input id="livePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Intervalo entre frames analisados (s)</label><input id="liveFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><h3>Modo de operação</h3><label class="inline"><input type="radio" name="liveMode" value="image">Somente imagem</label><label class="inline"><input type="radio" name="liveMode" value="arduino" checked>Imagem + Arduino Due</label><div class="row" style="margin-top:14px"><button id="startLive" class="btn good" style="flex:1">▶ START</button><button id="stopLive" class="btn stop" style="flex:1">■ STOP</button></div><h3>Log</h3><div id="serialLog" class="log"></div><div class="row" style="margin-top:8px"><button id="clearLog" class="btn secondary">Limpar log</button></div></div>
     </div>
   </section>
 
   <section id="view-reproc" class="view">
     <div class="grid4">
-      <div class="card">
-        <h2>Visualização do vídeo</h2>
-        <div class="videoWrap"><video id="reVideo" playsinline controls muted></video><canvas id="reOverlay" class="overlay"></canvas></div>
-        <div class="roiButtons">
-          <button id="reRoiManual" class="btn secondary">Selecionar ROI manualmente</button>
-          <button id="reRoiAuto" class="btn">Selecionar ROI automaticamente</button>
-        </div>
-        <div class="field" style="margin-top:12px"><label>Diâmetro da ROI (px)</label><input id="reRoiDiameter" type="number" value="40" min="4" step="1"></div>
-        <div class="row"><button id="reRoiLock" class="btn secondary">Travar ROI</button><button id="reRoiClear" class="btn secondary">Limpar ROI</button></div>
-      </div>
-      <div class="card">
-        <h2>Perfil temporal RGB</h2>
-        <div class="channels" id="reChannels">
-          <label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label>
-          <label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label>
-          <label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label>
-        </div>
-        <canvas id="reChart" class="chart"></canvas>
-        <div id="reProgress" class="progress"></div>
-      </div>
-      <div class="card">
-        <h2>Parâmetros de reprocessamento</h2>
-        <div class="field"><label>Número de replicatas</label><input id="reReplicates" type="number" value="5" min="1" step="1"></div>
-        <div class="field"><label>Intervalo mínimo entre picos (s)</label><input id="rePeakGap" type="number" value="5" min="0" step="0.1"></div>
-        <div class="field"><label>Intervalo entre frames analisados (s)</label><input id="reFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div>
-        <button id="executeReprocess" class="btn" style="width:100%;margin-top:12px">▶ Executar reprocessamento</button>
-      </div>
-      <div class="card">
-        <div class="row spaced"><h2>Vídeos carregados para reprocessamento</h2><label class="btn secondary" style="display:inline-block">+ Adicionar vídeos<input id="videoFiles" type="file" accept="video/*" multiple hidden></label></div>
-        <div id="videoList" class="videoList"></div>
-      </div>
+      <div class="card"><h2>Visualização do vídeo</h2><div class="videoWrap"><video id="reVideo" playsinline controls muted></video><canvas id="reOverlay" class="overlay"></canvas></div><div class="roiButtons"><button id="reRoiManual" class="btn secondary">Selecionar ROI manualmente</button><button id="reRoiAuto" class="btn">Selecionar ROI automaticamente</button></div><div class="field" style="margin-top:12px"><label>Diâmetro da ROI (px)</label><input id="reRoiDiameter" type="number" value="40" min="4" step="1"></div><div class="row"><button id="reRoiLock" class="btn secondary">Travar ROI</button><button id="reRoiClear" class="btn secondary">Limpar ROI</button></div></div>
+      <div class="card"><h2>Perfil temporal RGB</h2><div class="channels" id="reChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><canvas id="reChart" class="chart"></canvas><div id="reProgress" class="progress"></div></div>
+      <div class="card"><h2>Parâmetros de reprocessamento</h2><div class="field"><label>Número de replicatas</label><input id="reReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Intervalo mínimo entre picos (s)</label><input id="rePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Intervalo entre frames analisados (s)</label><input id="reFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><button id="executeReprocess" class="btn" style="width:100%;margin-top:12px">▶ Executar reprocessamento</button></div>
+      <div class="card"><div class="row spaced"><h2>Vídeos carregados para reprocessamento</h2><label class="btn secondary" style="display:inline-block">+ Adicionar vídeos<input id="videoFiles" type="file" accept="video/*" multiple hidden></label></div><div id="videoList" class="videoList"></div></div>
     </div>
   </section>
 
   <section id="view-results" class="view">
     <div class="exportRow"><button id="exportSummary" class="btn secondary">⇩ Exportar resumo</button><button id="exportFull" class="btn secondary">⇩ Exportar resultados</button></div>
     <div class="gridResults">
+      <div class="card"><h2>Registros</h2><div class="field"><input id="recordSearch" placeholder="Buscar registro..."></div><div class="tableWrap"><table id="recordsTable"><thead><tr><th><input id="selectAllRecords" type="checkbox"></th><th>Nome do registro</th><th>Classificação</th><th>Data/Hora</th><th></th></tr></thead><tbody></tbody></table></div></div>
       <div class="card">
-        <h2>Registros</h2>
-        <div class="field"><input id="recordSearch" placeholder="Buscar registro..."></div>
-        <div class="tableWrap"><table id="recordsTable"><thead><tr><th><input id="selectAllRecords" type="checkbox"></th><th>Nome do registro</th><th>Classificação</th><th>Data/Hora</th><th></th></tr></thead><tbody></tbody></table></div>
-      </div>
-      <div class="card">
-        <div class="resultHeader"><h2>Perfil temporal do registro</h2><div id="resultChannelTabs" class="channelTabs"><button data-ch="r">R</button><button data-ch="g" class="active">G</button><button data-ch="b">B</button></div></div>
+        <div class="resultHeader"><h2>Curva analítica</h2><div id="resultChannelTabs" class="channelTabs"><button data-ch="r">R</button><button data-ch="g" class="active">G</button><button data-ch="b">B</button></div></div>
+        <div id="calHint" class="calHint">A curva é atualizada automaticamente conforme padrões válidos são salvos para o canal selecionado. O sinal RGB do smartphone é expresso em contagens (0–255).</div>
+        <canvas id="calChart" class="chart calChartLarge"></canvas>
+        <div id="calMetrics" class="metrics calMetrics" style="margin-top:10px"></div>
+        <div class="sectionDivider"></div>
+        <h2>Perfil temporal do registro selecionado</h2>
         <canvas id="resultChart" class="chart smallChart"></canvas>
-        <h2 style="margin-top:16px">Calibração</h2>
-        <canvas id="calChart" class="chart smallChart"></canvas>
-        <div id="calMetrics" class="metrics" style="margin-top:10px"></div>
       </div>
-      <div class="card">
-        <h2>Resultado analítico</h2>
-        <div id="selectedRecordInfo" class="note" style="margin-bottom:10px">Nenhum registro selecionado.</div>
-        <div id="sampleMetrics" class="metrics"></div>
-        <div id="standardPanel" class="stdPanel hidden">
-          <h3>Dados do padrão selecionado</h3>
-          <div class="field"><label>Concentração conhecida</label><input id="standardConcentration" type="number" step="any"></div>
-          <div class="field"><label>Unidade</label><input id="standardUnit" placeholder="ex.: µmol L⁻¹"></div>
-          <button id="saveStandard" class="btn">💾 Salvar</button>
-          <div id="standardMsg" class="note" style="margin-top:8px"></div>
-        </div>
-        <div id="resultMsg" class="note" style="margin-top:10px"></div>
-      </div>
+      <div class="card"><h2>Resultado analítico</h2><div id="selectedRecordInfo" class="note" style="margin-bottom:10px">Nenhum registro selecionado.</div><div id="sampleMetrics" class="metrics"></div><div id="standardPanel" class="stdPanel hidden"><h3>Dados do padrão selecionado</h3><div class="field"><label>Concentração conhecida</label><input id="standardConcentration" type="number" step="any"></div><div class="field"><label>Unidade</label><input id="standardUnit" placeholder="ex.: µmol L⁻¹"></div><button id="saveStandard" class="btn">💾 Salvar</button><div id="standardMsg" class="note" style="margin-top:8px"></div></div><div id="resultMsg" class="note" style="margin-top:10px"></div></div>
     </div>
   </section>
   <div class="footer">CL RGB Analyzer — versão de teste</div>
 </div>
-
-<!-- hidden helpers kept internal -->
-<select id="cameraSelect" class="hidden"></select>
-<canvas id="workCanvas" class="hidden"></canvas>
+<select id="cameraSelect" class="hidden"></select><canvas id="workCanvas" class="hidden"></canvas>
 <script>
 'use strict';
-const $=id=>document.getElementById(id);
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const finite=v=>Number.isFinite(v);
-const fmt=(v,n=3)=>finite(v)?Number(v).toFixed(n).replace('.',','):'—';
-const fmtDot=(v,n=6)=>finite(v)?Number(v).toFixed(n):'';
+const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),finite=v=>Number.isFinite(v);
+const fmt=(v,n=3)=>finite(v)?Number(v).toFixed(n).replace('.',','):'—',fmtDot=(v,n=6)=>finite(v)?Number(v).toFixed(n):'';
 const safe=s=>(s||'registro').trim().replace(/[^\w\-]+/g,'_').replace(/_+/g,'_')||'registro';
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stat=arr=>{const a=arr.filter(finite),n=a.length;if(!n)return{n:0,mean:NaN,sd:NaN,cv:NaN};const mean=a.reduce((s,v)=>s+v,0)/n;const sd=n>1?Math.sqrt(a.reduce((s,v)=>s+(v-mean)**2,0)/(n-1)):0;return{n,mean,sd,cv:mean?100*sd/Math.abs(mean):NaN}};
-const csvCell=v=>`"${String(v??'').replaceAll('"','""')}"`;
-const downloadText=(text,name)=>{const b=new Blob([text],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)};
+const csvCell=v=>`"${String(v??'').replaceAll('"','""')}"`,downloadText=(text,name)=>{const b=new Blob([text],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const waitEvent=(el,name)=>new Promise((resolve,reject)=>{const ok=()=>{cleanup();resolve()},bad=()=>{cleanup();reject(new Error('Falha ao carregar mídia'))},cleanup=()=>{el.removeEventListener(name,ok);el.removeEventListener('error',bad)};el.addEventListener(name,ok,{once:true});el.addEventListener('error',bad,{once:true})});
-
-let stream=null, recorder=null, chunks=[], currentVideoBlob=null;
-let serialPort=null, serialReader=null, serialRunning=false, serialBuffer='', currentSerialRep=null, serialRepWindows=[];
-let liveTimer=null, liveStartPerf=0, liveData=[], liveActive=false;
-let liveRoi={x:0,y:0,locked:false,valid:false}, reRoi={x:0,y:0,locked:false,valid:false};
-let videoFiles=[], videoUrls=[], selectedVideoIndex=-1, reData=[];
-let records=[], recordId=1, selectedRecordId=null, resultChannel='g';
-let exportSelected=new Set();
-
-function channelsFrom(containerId){
-  return [...document.querySelectorAll(`#${containerId} input[type=checkbox]`)].filter(x=>x.checked).map(x=>x.value);
-}
+let stream=null,recorder=null,chunks=[],currentVideoBlob=null,serialPort=null,serialReader=null,serialRunning=false,serialBuffer='',currentSerialRep=null,serialRepWindows=[];
+let liveTimer=null,liveStartPerf=0,liveData=[],liveActive=false,liveRoi={x:0,y:0,locked:false,valid:false},reRoi={x:0,y:0,locked:false,valid:false};
+let videoFiles=[],videoUrls=[],selectedVideoIndex=-1,reData=[],records=[],recordId=1,selectedRecordId=null,resultChannel='g',exportSelected=new Set();
+function channelsFrom(containerId){return[...document.querySelectorAll(`#${containerId} input[type=checkbox]`)].filter(x=>x.checked).map(x=>x.value)}
 function mode(){return document.querySelector('input[name=liveMode]:checked')?.value||'arduino'}
 function log(msg){const el=$('serialLog');el.textContent+=`${new Date().toLocaleTimeString()}  ${msg}\n`;el.scrollTop=el.scrollHeight}
-function setConnection(which,on){
-  const el=$(which+'State');el.textContent=on?(which==='camera'?'conectada':'conectado'):(which==='camera'?'desconectada':'desconectado');el.classList.toggle('on',on);
-  const dot=$(which+'Conn').querySelector('.dot'); if(dot)dot.classList.toggle('on',on);
-}
-function ensureDots(){
-  ['camera','arduino'].forEach(k=>{const main=$(k+'Conn').querySelector('.connMain');if(!main.querySelector('.dot')){const d=document.createElement('span');d.className='dot';main.insertBefore(d,main.children[1])}})
-}
-ensureDots();
-
-document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  $('view-'+btn.dataset.tab).classList.add('active');
-  requestAnimationFrame(()=>{drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()});
-});
-
-async function listCameras(){
-  try{
-    const dev=await navigator.mediaDevices.enumerateDevices();const cams=dev.filter(d=>d.kind==='videoinput');$('cameraSelect').innerHTML='';
-    cams.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`Câmera ${i+1}`;$('cameraSelect').appendChild(o)});
-    return cams;
-  }catch(e){log('Erro ao listar câmeras: '+e.message);return[]}
-}
-async function connectCamera(){
-  try{
-    if(stream)stream.getTracks().forEach(t=>t.stop());
-    let cams=await listCameras();
-    if(!cams.length){const p=await navigator.mediaDevices.getUserMedia({video:true,audio:false});p.getTracks().forEach(t=>t.stop());cams=await listCameras()}
-    let id=$('cameraSelect').value||cams[0]?.deviceId;
-    if(cams.length>1){
-      const menu=cams.map((c,i)=>`${i+1}. ${c.label||'Câmera '+(i+1)}`).join('\n');
-      const ans=prompt(`Selecione a fonte de vídeo:\n${menu}`, '1');
-      const idx=clamp((Number(ans)||1)-1,0,cams.length-1); id=cams[idx].deviceId; $('cameraSelect').value=id;
-    }
-    stream=await navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id}}:true,audio:false});
-    $('liveVideo').srcObject=stream;await $('liveVideo').play();setConnection('camera',true);centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);log('Câmera conectada.');
-  }catch(e){setConnection('camera',false);log('Falha ao conectar câmera: '+e.message)}
-}
-$('cameraConn').onclick=connectCamera;
-
-async function connectArduino(){
-  try{
-    if(serialPort){await disconnectArduino();return}
-    if(!('serial' in navigator)){alert('Web Serial não é suportado neste navegador. Use Chrome/Edge em HTTPS.');return}
-    serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:9600});setConnection('arduino',true);serialRunning=true;readSerial();log('Arduino conectado.');
-  }catch(e){setConnection('arduino',false);log('Falha ao conectar Arduino: '+e.message);serialPort=null}
-}
-async function disconnectArduino(){
-  serialRunning=false;
-  try{if(serialReader){await serialReader.cancel();serialReader.releaseLock();serialReader=null}}catch(e){}
-  try{if(serialPort)await serialPort.close()}catch(e){}
-  serialPort=null;setConnection('arduino',false);log('Arduino desconectado.')
-}
-$('arduinoConn').onclick=connectArduino;
-$('clearLog').onclick=()=>{$('serialLog').textContent=''};
-
-async function sendSerial(text){
-  if(!serialPort)throw new Error('Arduino não conectado');
-  const w=serialPort.writable.getWriter();await w.write(new TextEncoder().encode(text.trim()+'\n'));w.releaseLock();log('Enviado: '+text.trim());
-}
-async function readSerial(){
-  while(serialPort&&serialRunning){
-    try{
-      serialReader=serialPort.readable.getReader();
-      while(serialRunning){
-        const {value,done}=await serialReader.read();if(done)break;
-        serialBuffer+=new TextDecoder().decode(value,{stream:true});
-        let i;while((i=serialBuffer.indexOf('\n'))>=0){const line=serialBuffer.slice(0,i).replace(/\r/g,'').trim();serialBuffer=serialBuffer.slice(i+1);if(line)handleSerialLine(line)}
-      }
-    }catch(e){if(serialRunning)log('Erro serial: '+e.message)}
-    finally{try{serialReader?.releaseLock()}catch(e){} serialReader=null}
-    break;
-  }
-}
-function handleSerialLine(line){
-  log(line);
-  let m=line.match(/Replicata\s*=\s*(\d+)/i);
-  if(m&&liveActive){
-    const rep=Number(m[1]),t=(performance.now()-liveStartPerf)/1000;
-    if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}
-    currentSerialRep=rep;serialRepWindows.push({rep,start:t,end:NaN});
-  }
-  if(/Fim da sequencia analitica/i.test(line)){
-    const t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}
-    currentSerialRep=null;
-    if(liveActive)stopLiveAcquisition(true);
-  }
-}
-
-function videoDims(v){return{w:v.videoWidth||v.clientWidth||1,h:v.videoHeight||v.clientHeight||1}}
-function centerRoi(video,roi){const {w,h}=videoDims(video);roi.x=w/2;roi.y=h/2;roi.valid=true}
-function clearRoi(roi,canvas){roi.valid=false;roi.locked=false;const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height)}
-function syncOverlay(video,canvas){const r=video.getBoundingClientRect(),dpr=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.height*dpr))}
-function roiDiameterFor(which){return Math.max(4,Number($(which==='live'?'liveRoiDiameter':'reRoiDiameter').value)||40)}
-function drawRoi(video,canvas,roi){
-  syncOverlay(video,canvas);const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(!roi.valid)return;const {w,h}=videoDims(video),rect=video.getBoundingClientRect();const sx=rect.width/w,sy=rect.height/h;ctx.scale(dpr,dpr);
-  const x=roi.x*sx,y=roi.y*sy,rad=roiDiameterFor(video===$('liveVideo')?'live':'re')/2*Math.min(sx,sy);
-  ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ffffff88';ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y);ctx.moveTo(x,y-8);ctx.lineTo(x,y+8);ctx.stroke();
-}
-function overlayPointer(video,canvas,roi,which){
-  let dragging=false;
-  const move=e=>{if(roi.locked)return;const rect=canvas.getBoundingClientRect(),{w,h}=videoDims(video);roi.x=clamp((e.clientX-rect.left)/rect.width*w,0,w);roi.y=clamp((e.clientY-rect.top)/rect.height*h,0,h);roi.valid=true;drawRoi(video,canvas,roi)};
-  canvas.onpointerdown=e=>{dragging=true;canvas.setPointerCapture(e.pointerId);move(e)};
-  canvas.onpointermove=e=>{if(dragging)move(e)};
-  canvas.onpointerup=e=>{dragging=false;try{canvas.releasePointerCapture(e.pointerId)}catch(_){}};
-}
-overlayPointer($('liveVideo'),$('liveOverlay'),liveRoi,'live');overlayPointer($('reVideo'),$('reOverlay'),reRoi,'re');
-
-function meanRoi(video,roi,diameter,selected){
-  if(!roi.valid||!video.videoWidth)return null;
-  const c=$('workCanvas'),ctx=c.getContext('2d',{willReadFrequently:true}),w=video.videoWidth,h=video.videoHeight;
-  const rad=diameter/2,x0=Math.max(0,Math.floor(roi.x-rad)),y0=Math.max(0,Math.floor(roi.y-rad)),x1=Math.min(w,Math.ceil(roi.x+rad)),y1=Math.min(h,Math.ceil(roi.y+rad)),ww=x1-x0,hh=y1-y0;
-  c.width=Math.max(1,ww);c.height=Math.max(1,hh);ctx.drawImage(video,x0,y0,ww,hh,0,0,ww,hh);
-  const img=ctx.getImageData(0,0,ww,hh).data;let sr=0,sg=0,sb=0,n=0;
-  for(let yy=0;yy<y1-y0;yy++)for(let xx=0;xx<ww;xx++){const dx=x0+xx-roi.x,dy=y0+yy-roi.y;if(dx*dx+dy*dy>rad*rad)continue;const i=(yy*ww+xx)*4;sr+=img[i];sg+=img[i+1];sb+=img[i+2];n++}
-  if(!n)return null;return{r:selected.includes('r')?sr/n:NaN,g:selected.includes('g')?sg/n:NaN,b:selected.includes('b')?sb/n:NaN,pixels:n}
-}
-async function autoRoi(video,roi,diameter,canvas){
-  if(!video.videoWidth){alert('A fonte de vídeo ainda não está pronta.');return}
-  const maxW=360,scale=Math.min(1,maxW/video.videoWidth),w=Math.max(80,Math.round(video.videoWidth*scale)),h=Math.max(60,Math.round(video.videoHeight*scale));
-  const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,0,w,h);const data=ctx.getImageData(0,0,w,h).data;
-  const rad=Math.max(2,diameter*scale/2),step=Math.max(2,Math.round(rad/2));let best=-Infinity,bx=w/2,by=h/2;
-  for(let y=Math.ceil(rad);y<h-rad;y+=step)for(let x=Math.ceil(rad);x<w-rad;x+=step){let s=0,n=0;for(let yy=-rad;yy<=rad;yy+=2)for(let xx=-rad;xx<=rad;xx+=2){if(xx*xx+yy*yy>rad*rad)continue;const px=Math.round(x+xx),py=Math.round(y+yy),i=(py*w+px)*4;s+=data[i]+data[i+1]+data[i+2];n++}const score=n?s/n:0;if(score>best){best=score;bx=x;by=y}}
-  roi.x=bx/scale;roi.y=by/scale;roi.valid=true;roi.locked=true;drawRoi(video,canvas,roi)
-}
-$('liveRoiManual').onclick=()=>{liveRoi.locked=false;if(!liveRoi.valid)centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)};
-$('liveRoiAuto').onclick=()=>autoRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),$('liveOverlay'));
-$('liveRoiLock').onclick=()=>{liveRoi.locked=true;drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)};
-$('liveRoiClear').onclick=()=>clearRoi(liveRoi,$('liveOverlay'));
-$('reRoiManual').onclick=()=>{reRoi.locked=false;if(!reRoi.valid)centerRoi($('reVideo'),reRoi);drawRoi($('reVideo'),$('reOverlay'),reRoi)};
-$('reRoiAuto').onclick=()=>autoRoi($('reVideo'),reRoi,roiDiameterFor('re'),$('reOverlay'));
-$('reRoiLock').onclick=()=>{reRoi.locked=true;drawRoi($('reVideo'),$('reOverlay'),reRoi)};
-$('reRoiClear').onclick=()=>clearRoi(reRoi,$('reOverlay'));
-
-function drawTemporal(canvasId,data,channels){
-  const c=$(canvasId),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.max(300,Math.round(rect.width||600)),h=Math.max(220,Math.round(rect.height||360));c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.fillStyle='#fff';x.fillRect(0,0,w,h);
-  const m={l:48,r:18,t:28,b:38};x.strokeStyle='#cdd5df';x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();x.fillStyle='#475467';x.font='12px Arial';x.fillText('Sinal',7,17);x.fillText('Tempo (s)',w-70,h-10);
-  if(!data.length){x.fillStyle='#98a2b3';x.fillText('Sem dados',m.l+15,m.t+22);return}
-  const xs=data.map(d=>d.t).filter(finite),vals=[];channels.forEach(k=>data.forEach(d=>{if(finite(d[k]))vals.push(d[k])}));if(!xs.length||!vals.length)return;
-  let xmin=0,xmax=Math.max(...xs)||1,ymin=Math.min(...vals),ymax=Math.max(...vals);if(ymax===ymin)ymax=ymin+1;const pad=(ymax-ymin)*.08;ymin=Math.max(0,ymin-pad);ymax+=pad;
-  const X=t=>m.l+(t-xmin)/(xmax-xmin||1)*(w-m.l-m.r),Y=v=>h-m.b-(v-ymin)/(ymax-ymin)*(h-m.t-m.b);
-  const colors={r:'#dc2626',g:'#16a34a',b:'#2563eb'};channels.forEach(k=>{x.strokeStyle=colors[k];x.lineWidth=1.7;x.beginPath();let start=true;data.forEach(d=>{if(!finite(d[k]))return;const px=X(d.t),py=Y(d[k]);if(start){x.moveTo(px,py);start=false}else x.lineTo(px,py)});x.stroke()});
-  let lx=m.l+10;channels.forEach(k=>{x.fillStyle=colors[k];x.fillRect(lx,10,18,3);x.fillStyle='#344054';x.fillText(k.toUpperCase(),lx+24,15);lx+=55});
-}
-function drawCalibration(reg){
-  const c=$('calChart'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.max(300,Math.round(rect.width||600)),h=Math.max(220,Math.round(rect.height||280));c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.fillStyle='#fff';x.fillRect(0,0,w,h);const m={l:55,r:20,t:25,b:42};x.strokeStyle='#cdd5df';x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();x.font='12px Arial';x.fillStyle='#475467';x.fillText('Sinal',8,18);x.fillText('Concentração',w-95,h-10);
-  if(!reg.ok){x.fillStyle='#98a2b3';x.fillText('Curva não disponível',m.l+15,m.t+25);return}
-  const xs=reg.pts.map(p=>p.x),ys=reg.pts.map(p=>p.y);let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);const xp=(xmax-xmin||1)*.08,yp=(ymax-ymin||1)*.12;xmin-=xp;xmax+=xp;ymin=Math.max(0,ymin-yp);ymax+=yp;const X=v=>m.l+(v-xmin)/(xmax-xmin)*(w-m.l-m.r),Y=v=>h-m.b-(v-ymin)/(ymax-ymin)*(h-m.t-m.b);const col={r:'#dc2626',g:'#16a34a',b:'#2563eb'}[reg.channel];x.strokeStyle=col;x.beginPath();x.moveTo(X(xmin),Y(reg.intercept+reg.slope*xmin));x.lineTo(X(xmax),Y(reg.intercept+reg.slope*xmax));x.stroke();x.fillStyle=col;reg.pts.forEach(p=>{x.beginPath();x.arc(X(p.x),Y(p.y),4,0,Math.PI*2);x.fill()})
-}
-function detectPeaks(data,nRep,gap,channels,windows=[]){
-  if(!data.length)return[];
-  if(windows.length){
-    return windows.slice(0,nRep).map((win,i)=>{const seg=data.filter(d=>d.t>=win.start&&(!finite(win.end)||d.t<=win.end));const out={rep:i+1};channels.forEach(k=>{let best=null;seg.forEach(d=>{if(finite(d[k])&&(!best||d[k]>best[k]))best=d});out[k]=best?best[k]:NaN;out['t'+k]=best?best.t:NaN});return out})
-  }
-  const score=d=>channels.reduce((s,k)=>s+(finite(d[k])?d[k]:0),0);const candidates=[];
-  for(let i=1;i<data.length-1;i++){const s=score(data[i]);if(s>=score(data[i-1])&&s>=score(data[i+1]))candidates.push({i,t:data[i].t,s})}
-  candidates.sort((a,b)=>b.s-a.s);const chosen=[];for(const c of candidates){if(chosen.every(p=>Math.abs(p.t-c.t)>=gap)){chosen.push(c);if(chosen.length>=nRep)break}}chosen.sort((a,b)=>a.t-b.t);
-  return chosen.map((p,idx)=>{const half=Math.max(gap/2,0.25),seg=data.filter(d=>Math.abs(d.t-p.t)<=half),out={rep:idx+1};channels.forEach(k=>{let best=null;seg.forEach(d=>{if(finite(d[k])&&(!best||d[k]>best[k]))best=d});out[k]=best?best[k]:NaN;out['t'+k]=best?best.t:NaN});return out})
-}
+function setConnection(which,on){const el=$(which+'State');el.textContent=on?(which==='camera'?'conectada':'conectado'):(which==='camera'?'desconectada':'desconectado');el.classList.toggle('on',on);const dot=$(which+'Conn').querySelector('.dot');if(dot)dot.classList.toggle('on',on)}
+function ensureDots(){['camera','arduino'].forEach(k=>{const main=$(k+'Conn').querySelector('.connMain');if(!main.querySelector('.dot')){const d=document.createElement('span');d.className='dot';main.insertBefore(d,main.children[1])}})}ensureDots();
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+btn.dataset.tab).classList.add('active');requestAnimationFrame(()=>{drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()})});
+async function listCameras(){try{const dev=await navigator.mediaDevices.enumerateDevices(),cams=dev.filter(d=>d.kind==='videoinput');$('cameraSelect').innerHTML='';cams.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`Câmera ${i+1}`;$('cameraSelect').appendChild(o)});return cams}catch(e){log('Erro ao listar câmeras: '+e.message);return[]}}
+async function connectCamera(){try{if(stream)stream.getTracks().forEach(t=>t.stop());let cams=await listCameras();if(!cams.length){const p=await navigator.mediaDevices.getUserMedia({video:true,audio:false});p.getTracks().forEach(t=>t.stop());cams=await listCameras()}let id=$('cameraSelect').value||cams[0]?.deviceId;if(cams.length>1){const menu=cams.map((c,i)=>`${i+1}. ${c.label||'Câmera '+(i+1)}`).join('\n'),ans=prompt(`Selecione a fonte de vídeo:\n${menu}`,'1'),idx=clamp((Number(ans)||1)-1,0,cams.length-1);id=cams[idx].deviceId;$('cameraSelect').value=id}stream=await navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id}}:true,audio:false});$('liveVideo').srcObject=stream;await $('liveVideo').play();setConnection('camera',true);centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);log('Câmera conectada.')}catch(e){setConnection('camera',false);log('Falha ao conectar câmera: '+e.message)}}$('cameraConn').onclick=connectCamera;
+async function connectArduino(){try{if(serialPort){await disconnectArduino();return}if(!('serial'in navigator)){alert('Web Serial não é suportado neste navegador. Use Chrome/Edge em HTTPS.');return}serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:9600});setConnection('arduino',true);serialRunning=true;readSerial();log('Arduino conectado.')}catch(e){setConnection('arduino',false);log('Falha ao conectar Arduino: '+e.message);serialPort=null}}
+async function disconnectArduino(){serialRunning=false;try{if(serialReader){await serialReader.cancel();serialReader.releaseLock();serialReader=null}}catch(e){}try{if(serialPort)await serialPort.close()}catch(e){}serialPort=null;setConnection('arduino',false);log('Arduino desconectado.')}$('arduinoConn').onclick=connectArduino;$('clearLog').onclick=()=>{$('serialLog').textContent=''};
+async function sendSerial(text){if(!serialPort)throw new Error('Arduino não conectado');const w=serialPort.writable.getWriter();await w.write(new TextEncoder().encode(text.trim()+'\n'));w.releaseLock();log('Enviado: '+text.trim())}
+async function readSerial(){while(serialPort&&serialRunning){try{serialReader=serialPort.readable.getReader();while(serialRunning){const{value,done}=await serialReader.read();if(done)break;serialBuffer+=new TextDecoder().decode(value,{stream:true});let i;while((i=serialBuffer.indexOf('\n'))>=0){const line=serialBuffer.slice(0,i).replace(/\r/g,'').trim();serialBuffer=serialBuffer.slice(i+1);if(line)handleSerialLine(line)}}}catch(e){if(serialRunning)log('Erro serial: '+e.message)}finally{try{serialReader?.releaseLock()}catch(e){}serialReader=null}break}}
+function handleSerialLine(line){log(line);let m=line.match(/Replicata\s*=\s*(\d+)/i);if(m&&liveActive){const rep=Number(m[1]),t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}currentSerialRep=rep;serialRepWindows.push({rep,start:t,end:NaN})}if(/Fim da sequencia analitica/i.test(line)){const t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}currentSerialRep=null;if(liveActive)stopLiveAcquisition(true)}}
+function videoDims(v){return{w:v.videoWidth||v.clientWidth||1,h:v.videoHeight||v.clientHeight||1}}function centerRoi(video,roi){const{w,h}=videoDims(video);roi.x=w/2;roi.y=h/2;roi.valid=true}function clearRoi(roi,canvas){roi.valid=false;roi.locked=false;canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height)}
+function syncOverlay(video,canvas){const r=video.getBoundingClientRect(),dpr=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.height*dpr))}function roiDiameterFor(which){return Math.max(4,Number($(which==='live'?'liveRoiDiameter':'reRoiDiameter').value)||40)}
+function drawRoi(video,canvas,roi){syncOverlay(video,canvas);const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);if(!roi.valid)return;const{w,h}=videoDims(video),rect=video.getBoundingClientRect(),sx=rect.width/w,sy=rect.height/h;ctx.scale(dpr,dpr);const x=roi.x*sx,y=roi.y*sy,rad=roiDiameterFor(video===$('liveVideo')?'live':'re')/2*Math.min(sx,sy);ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ffffff88';ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y);ctx.moveTo(x,y-8);ctx.lineTo(x,y+8);ctx.stroke()}
+function overlayPointer(video,canvas,roi){let dragging=false;const move=e=>{if(roi.locked)return;const rect=canvas.getBoundingClientRect(),{w,h}=videoDims(video);roi.x=clamp((e.clientX-rect.left)/rect.width*w,0,w);roi.y=clamp((e.clientY-rect.top)/rect.height*h,0,h);roi.valid=true;drawRoi(video,canvas,roi)};canvas.onpointerdown=e=>{dragging=true;canvas.setPointerCapture(e.pointerId);move(e)};canvas.onpointermove=e=>{if(dragging)move(e)};canvas.onpointerup=e=>{dragging=false;try{canvas.releasePointerCapture(e.pointerId)}catch(_){}}}overlayPointer($('liveVideo'),$('liveOverlay'),liveRoi);overlayPointer($('reVideo'),$('reOverlay'),reRoi);
+function meanRoi(video,roi,diameter,selected){if(!roi.valid||!video.videoWidth)return null;const c=$('workCanvas'),ctx=c.getContext('2d',{willReadFrequently:true}),w=video.videoWidth,h=video.videoHeight,rad=diameter/2,x0=Math.max(0,Math.floor(roi.x-rad)),y0=Math.max(0,Math.floor(roi.y-rad)),x1=Math.min(w,Math.ceil(roi.x+rad)),y1=Math.min(h,Math.ceil(roi.y+rad)),ww=x1-x0,hh=y1-y0;c.width=Math.max(1,ww);c.height=Math.max(1,hh);ctx.drawImage(video,x0,y0,ww,hh,0,0,ww,hh);const img=ctx.getImageData(0,0,ww,hh).data;let sr=0,sg=0,sb=0,n=0;for(let yy=0;yy<y1-y0;yy++)for(let xx=0;xx<ww;xx++){const dx=x0+xx-roi.x,dy=y0+yy-roi.y;if(dx*dx+dy*dy>rad*rad)continue;const i=(yy*ww+xx)*4;sr+=img[i];sg+=img[i+1];sb+=img[i+2];n++}if(!n)return null;return{r:selected.includes('r')?sr/n:NaN,g:selected.includes('g')?sg/n:NaN,b:selected.includes('b')?sb/n:NaN,pixels:n}}
+async function autoRoi(video,roi,diameter,canvas){if(!video.videoWidth){alert('A fonte de vídeo ainda não está pronta.');return}const maxW=360,scale=Math.min(1,maxW/video.videoWidth),w=Math.max(80,Math.round(video.videoWidth*scale)),h=Math.max(60,Math.round(video.videoHeight*scale)),c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,0,w,h);const data=ctx.getImageData(0,0,w,h).data,rad=Math.max(2,diameter*scale/2),step=Math.max(2,Math.round(rad/2));let best=-Infinity,bx=w/2,by=h/2;for(let y=Math.ceil(rad);y<h-rad;y+=step)for(let x=Math.ceil(rad);x<w-rad;x+=step){let s=0,n=0;for(let yy=-rad;yy<=rad;yy+=2)for(let xx=-rad;xx<=rad;xx+=2){if(xx*xx+yy*yy>rad*rad)continue;const px=Math.round(x+xx),py=Math.round(y+yy),i=(py*w+px)*4;s+=data[i]+data[i+1]+data[i+2];n++}const score=n?s/n:0;if(score>best){best=score;bx=x;by=y}}roi.x=bx/scale;roi.y=by/scale;roi.valid=true;roi.locked=true;drawRoi(video,canvas,roi)}
+$('liveRoiManual').onclick=()=>{liveRoi.locked=false;if(!liveRoi.valid)centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)};$('liveRoiAuto').onclick=()=>autoRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),$('liveOverlay'));$('liveRoiLock').onclick=()=>{liveRoi.locked=true;drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)};$('liveRoiClear').onclick=()=>clearRoi(liveRoi,$('liveOverlay'));
+$('reRoiManual').onclick=()=>{reRoi.locked=false;if(!reRoi.valid)centerRoi($('reVideo'),reRoi);drawRoi($('reVideo'),$('reOverlay'),reRoi)};$('reRoiAuto').onclick=()=>autoRoi($('reVideo'),reRoi,roiDiameterFor('re'),$('reOverlay'));$('reRoiLock').onclick=()=>{reRoi.locked=true;drawRoi($('reVideo'),$('reOverlay'),reRoi)};$('reRoiClear').onclick=()=>clearRoi(reRoi,$('reOverlay'));
+function drawTemporal(canvasId,data,channels){const c=$(canvasId),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.max(300,Math.round(rect.width||600)),h=Math.max(220,Math.round(rect.height||360));c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.fillStyle='#fff';x.fillRect(0,0,w,h);const m={l:52,r:18,t:30,b:42};x.strokeStyle='#cdd5df';x.lineWidth=1;x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();x.fillStyle='#475467';x.font='12px Arial';x.fillText('Sinal (contagens)',7,18);x.fillText('Tempo (s)',w-72,h-12);for(let v=0;v<=255;v+=51){const py=h-m.b-v/255*(h-m.t-m.b);x.fillStyle='#667085';x.fillText(String(v),m.l-34,py+4);x.strokeStyle='#eef1f6';x.beginPath();x.moveTo(m.l,py);x.lineTo(w-m.r,py);x.stroke()}if(!data.length){x.fillStyle='#98a2b3';x.fillText('Sem dados',m.l+15,m.t+22);return}const xs=data.map(d=>d.t).filter(finite);if(!xs.length)return;const xmax=Math.max(...xs)||1,X=t=>m.l+t/xmax*(w-m.l-m.r),Y=v=>h-m.b-clamp(v,0,255)/255*(h-m.t-m.b),colors={r:'#dc2626',g:'#16a34a',b:'#2563eb'};channels.forEach(k=>{x.strokeStyle=colors[k];x.lineWidth=1.8;x.beginPath();let start=true;data.forEach(d=>{if(!finite(d[k]))return;const px=X(d.t),py=Y(d[k]);if(start){x.moveTo(px,py);start=false}else x.lineTo(px,py)});x.stroke()});let lx=m.l+10;channels.forEach(k=>{x.fillStyle=colors[k];x.fillRect(lx,10,18,3);x.fillStyle='#344054';x.fillText(k.toUpperCase(),lx+24,15);lx+=55})}
+function detectPeaks(data,nRep,gap,channels,windows=[]){if(!data.length)return[];if(windows.length)return windows.slice(0,nRep).map((win,i)=>{const seg=data.filter(d=>d.t>=win.start&&(!finite(win.end)||d.t<=win.end)),out={rep:i+1};channels.forEach(k=>{let best=null;seg.forEach(d=>{if(finite(d[k])&&(!best||d[k]>best[k]))best=d});out[k]=best?best[k]:NaN;out['t'+k]=best?best.t:NaN});return out});const score=d=>channels.reduce((s,k)=>s+(finite(d[k])?d[k]:0),0),candidates=[];for(let i=1;i<data.length-1;i++){const s=score(data[i]);if(s>=score(data[i-1])&&s>=score(data[i+1]))candidates.push({i,t:data[i].t,s})}candidates.sort((a,b)=>b.s-a.s);const chosen=[];for(const c of candidates){if(chosen.every(p=>Math.abs(p.t-c.t)>=gap)){chosen.push(c);if(chosen.length>=nRep)break}}chosen.sort((a,b)=>a.t-b.t);return chosen.map((p,idx)=>{const half=Math.max(gap/2,.25),seg=data.filter(d=>Math.abs(d.t-p.t)<=half),out={rep:idx+1};channels.forEach(k=>{let best=null;seg.forEach(d=>{if(finite(d[k])&&(!best||d[k]>best[k]))best=d});out[k]=best?best[k]:NaN;out['t'+k]=best?best.t:NaN});return out})}
 function peakSignals(rec,ch){return rec.peaks.map(p=>p[ch]).filter(finite)}
-
-async function startRecorder(){
-  chunks=[];currentVideoBlob=null;if(!stream||!window.MediaRecorder)return;
-  try{recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onstop=()=>{currentVideoBlob=new Blob(chunks,{type:recorder.mimeType||'video/webm'})};recorder.start()}catch(e){log('Gravação de vídeo indisponível: '+e.message)}
-}
-async function stopRecorder(){
-  if(!recorder||recorder.state==='inactive')return currentVideoBlob;
-  return await new Promise(resolve=>{const done=()=>setTimeout(()=>resolve(currentVideoBlob),0);recorder.addEventListener('stop',done,{once:true});try{recorder.stop()}catch(e){resolve(currentVideoBlob)}});
-}
-async function startLiveAcquisition(){
-  if(liveActive)return;if(!stream){await connectCamera();if(!stream)return}
-  if(!liveRoi.valid){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}
-  const channels=channelsFrom('liveChannels');if(!channels.length){alert('Selecione pelo menos um canal.');return}
-  liveData=[];serialRepWindows=[];currentSerialRep=null;liveActive=true;liveStartPerf=performance.now();$('liveProgress').textContent='Aquisição em andamento';await startRecorder();
-  const dt=Math.max(.01,Number($('liveFrameInterval').value)||.1);
-  const tick=()=>{if(!liveActive)return;const v=meanRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),channels);if(v){v.t=(performance.now()-liveStartPerf)/1000;liveData.push(v);drawTemporal('liveChart',liveData,channels)}};
-  tick();liveTimer=setInterval(tick,dt*1000);
-  if(mode()==='arduino'){if(!serialPort){log('Arduino não conectado. Conecte-o ou use o modo Somente imagem.');stopLiveAcquisition(false,false);return}await sleep(150);try{await sendSerial('START')}catch(e){log(e.message);stopLiveAcquisition(false,false)}}
-}
-async function stopLiveAcquisition(auto=false,createRecord=true){
-  if(!liveActive)return;liveActive=false;if(liveTimer){clearInterval(liveTimer);liveTimer=null}
-  const stoppedVideoBlob=await stopRecorder();
-  $('liveProgress').textContent=auto?'Sequência finalizada automaticamente':'Aquisição interrompida';
-  if(createRecord&&liveData.length){
-    const channels=channelsFrom('liveChannels'),n=Math.max(1,Number($('liveReplicates').value)||5),gap=Math.max(0,Number($('livePeakGap').value)||5);
-    const peaks=detectPeaks(liveData,n,gap,channels,serialRepWindows);
-    addRecord({name:$('runName').value||`Corrida ${recordId}`,source:'Aquisição',channels,interval:Number($('liveFrameInterval').value),gap,nRep:n,roi:{nx:liveRoi.x/($('liveVideo').videoWidth||1),ny:liveRoi.y/($('liveVideo').videoHeight||1),diameter:roiDiameterFor('live')},data:liveData.map(x=>({...x})),peaks,videoBlob:stoppedVideoBlob});
-    incrementRunName();
-  }
-}
-function incrementRunName(){const s=$('runName').value,m=s.match(/^(.*?)(\d+)$/);$('runName').value=m?m[1]+String(Number(m[2])+1).padStart(m[2].length,'0'):`Corrida ${String(recordId).padStart(3,'0')}`}
-$('startLive').onclick=startLiveAcquisition;$('stopLive').onclick=()=>stopLiveAcquisition(false,true);
-
-$('liveChannels').onchange=()=>drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));
-$('reChannels').onchange=()=>drawTemporal('reChart',reData,channelsFrom('reChannels'));
-$('liveRoiDiameter').oninput=()=>drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);$('reRoiDiameter').oninput=()=>drawRoi($('reVideo'),$('reOverlay'),reRoi);
+async function startRecorder(){chunks=[];currentVideoBlob=null;if(!stream||!window.MediaRecorder)return;try{recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onstop=()=>{currentVideoBlob=new Blob(chunks,{type:recorder.mimeType||'video/webm'})};recorder.start()}catch(e){log('Gravação de vídeo indisponível: '+e.message)}}
+async function stopRecorder(){if(!recorder||recorder.state==='inactive')return currentVideoBlob;return await new Promise(resolve=>{const done=()=>setTimeout(()=>resolve(currentVideoBlob),0);recorder.addEventListener('stop',done,{once:true});try{recorder.stop()}catch(e){resolve(currentVideoBlob)}})}
+async function startLiveAcquisition(){if(liveActive)return;if(!stream){await connectCamera();if(!stream)return}if(!liveRoi.valid){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}const channels=channelsFrom('liveChannels');if(!channels.length){alert('Selecione pelo menos um canal.');return}liveData=[];serialRepWindows=[];currentSerialRep=null;liveActive=true;liveStartPerf=performance.now();$('liveProgress').textContent='Aquisição em andamento';await startRecorder();const dt=Math.max(.01,Number($('liveFrameInterval').value)||.1),tick=()=>{if(!liveActive)return;const v=meanRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),channels);if(v){v.t=(performance.now()-liveStartPerf)/1000;liveData.push(v);drawTemporal('liveChart',liveData,channels)}};tick();liveTimer=setInterval(tick,dt*1000);if(mode()==='arduino'){if(!serialPort){log('Arduino não conectado. Conecte-o ou use o modo Somente imagem.');stopLiveAcquisition(false,false);return}await sleep(150);try{await sendSerial('START')}catch(e){log(e.message);stopLiveAcquisition(false,false)}}}
+async function stopLiveAcquisition(auto=false,createRecord=true){if(!liveActive)return;liveActive=false;if(liveTimer){clearInterval(liveTimer);liveTimer=null}const stoppedVideoBlob=await stopRecorder();$('liveProgress').textContent=auto?'Sequência finalizada automaticamente':'Aquisição interrompida';if(createRecord&&liveData.length){const channels=channelsFrom('liveChannels'),n=Math.max(1,Number($('liveReplicates').value)||5),gap=Math.max(0,Number($('livePeakGap').value)||5),peaks=detectPeaks(liveData,n,gap,channels,serialRepWindows);addRecord({name:$('runName').value||`Corrida ${recordId}`,source:'Aquisição',channels,interval:Number($('liveFrameInterval').value),gap,nRep:n,roi:{nx:liveRoi.x/($('liveVideo').videoWidth||1),ny:liveRoi.y/($('liveVideo').videoHeight||1),diameter:roiDiameterFor('live')},data:liveData.map(x=>({...x})),peaks,videoBlob:stoppedVideoBlob});incrementRunName()}}
+function incrementRunName(){const s=$('runName').value,m=s.match(/^(.*?)(\d+)$/);$('runName').value=m?m[1]+String(Number(m[2])+1).padStart(m[2].length,'0'):`Corrida ${String(recordId).padStart(3,'0')}`}$('startLive').onclick=startLiveAcquisition;$('stopLive').onclick=()=>stopLiveAcquisition(false,true);$('liveChannels').onchange=()=>drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));$('reChannels').onchange=()=>drawTemporal('reChart',reData,channelsFrom('reChannels'));$('liveRoiDiameter').oninput=()=>drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);$('reRoiDiameter').oninput=()=>drawRoi($('reVideo'),$('reOverlay'),reRoi);
 window.addEventListener('resize',()=>{drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);drawRoi($('reVideo'),$('reOverlay'),reRoi);drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()});
-
-$('videoFiles').onchange=e=>{
-  const files=[...e.target.files];files.forEach(f=>{videoFiles.push(f);videoUrls.push(URL.createObjectURL(f))});renderVideoList();if(selectedVideoIndex<0&&videoFiles.length)selectVideo(0);e.target.value=''
-};
-function renderVideoList(){
-  $('videoList').innerHTML=videoFiles.map((f,i)=>`<div class="videoItem ${i===selectedVideoIndex?'selected':''}"><button onclick="selectVideo(${i})">🎞 ${escapeHtml(f.name)}</button><button onclick="removeVideo(${i})">🗑</button></div>`).join('')
-}
-window.selectVideo=async i=>{
-  selectedVideoIndex=i;renderVideoList();const v=$('reVideo');v.src=videoUrls[i];await waitEvent(v,'loadedmetadata');if(v.readyState<2)await waitEvent(v,'loadeddata').catch(()=>{});v.currentTime=0;centerRoi(v,reRoi);reRoi.locked=false;drawRoi(v,$('reOverlay'),reRoi)
-};
-window.removeVideo=i=>{URL.revokeObjectURL(videoUrls[i]);videoFiles.splice(i,1);videoUrls.splice(i,1);if(selectedVideoIndex===i)selectedVideoIndex=-1;else if(selectedVideoIndex>i)selectedVideoIndex--;renderVideoList();if(selectedVideoIndex<0&&videoFiles.length)selectVideo(0)};
-
+$('videoFiles').onchange=e=>{const files=[...e.target.files];files.forEach(f=>{videoFiles.push(f);videoUrls.push(URL.createObjectURL(f))});renderVideoList();if(selectedVideoIndex<0&&videoFiles.length)selectVideo(0);e.target.value=''};
+function renderVideoList(){$('videoList').innerHTML=videoFiles.map((f,i)=>`<div class="videoItem ${i===selectedVideoIndex?'selected':''}"><button onclick="selectVideo(${i})">🎞 ${escapeHtml(f.name)}</button><button onclick="removeVideo(${i})">🗑</button></div>`).join('')}
+window.selectVideo=async i=>{selectedVideoIndex=i;renderVideoList();const v=$('reVideo');v.src=videoUrls[i];await waitEvent(v,'loadedmetadata');if(v.readyState<2)await waitEvent(v,'loadeddata').catch(()=>{});v.currentTime=0;centerRoi(v,reRoi);reRoi.locked=false;drawRoi(v,$('reOverlay'),reRoi)};window.removeVideo=i=>{URL.revokeObjectURL(videoUrls[i]);videoFiles.splice(i,1);videoUrls.splice(i,1);if(selectedVideoIndex===i)selectedVideoIndex=-1;else if(selectedVideoIndex>i)selectedVideoIndex--;renderVideoList();if(selectedVideoIndex<0&&videoFiles.length)selectVideo(0)};
 async function seekVideo(v,t){if(Math.abs((v.currentTime||0)-t)<.002)return;const p=waitEvent(v,'seeked');v.currentTime=t;await p}
-async function processFile(index,roiRel,diameter,channels,dt,nRep,gap){
-  const v=$('reVideo');v.src=videoUrls[index];await waitEvent(v,'loadedmetadata');const dur=v.duration;if(!finite(dur)||dur<=0)throw new Error('Duração de vídeo inválida');
-  const roi={x:roiRel.nx*v.videoWidth,y:roiRel.ny*v.videoHeight,valid:true,locked:true};const data=[];
-  const total=Math.floor(dur/dt)+1;
-  for(let j=0,t=0;t<=dur+1e-8;j++,t=j*dt){$('reProgress').textContent=`Processando ${index+1}/${videoFiles.length}: ${Math.min(100,Math.round(100*j/total))}%`;await seekVideo(v,Math.min(t,dur));const s=meanRoi(v,roi,diameter,channels);if(s){s.t=Math.min(t,dur);data.push(s)}}
-  const peaks=detectPeaks(data,nRep,gap,channels);return{data,peaks,roi}
-}
-$('executeReprocess').onclick=async()=>{
-  if(!videoFiles.length){alert('Adicione um ou mais vídeos.');return}
-  if(!reRoi.valid){centerRoi($('reVideo'),reRoi)}
-  const v=$('reVideo');if(!v.videoWidth){await selectVideo(Math.max(0,selectedVideoIndex))}
-  const channels=channelsFrom('reChannels');if(!channels.length){alert('Selecione pelo menos um canal.');return}
-  const rel={nx:reRoi.x/(v.videoWidth||1),ny:reRoi.y/(v.videoHeight||1)},diameter=roiDiameterFor('re'),dt=Math.max(.01,Number($('reFrameInterval').value)||.1),nRep=Math.max(1,Number($('reReplicates').value)||5),gap=Math.max(0,Number($('rePeakGap').value)||5);
-  $('executeReprocess').disabled=true;
-  try{
-    for(let i=0;i<videoFiles.length;i++){
-      const r=await processFile(i,rel,diameter,channels,dt,nRep,gap);reData=r.data;drawTemporal('reChart',reData,channels);
-      addRecord({name:videoFiles[i].name.replace(/\.[^.]+$/,''),source:'Reprocessamento',channels,interval:dt,gap,nRep,roi:{nx:rel.nx,ny:rel.ny,diameter},data:r.data,peaks:r.peaks,videoName:videoFiles[i].name});
-    }
-    $('reProgress').textContent=`Concluído: ${videoFiles.length} vídeo(s) processado(s).`;
-  }catch(e){$('reProgress').textContent='Erro: '+e.message}
-  finally{$('executeReprocess').disabled=false;if(selectedVideoIndex>=0)selectVideo(selectedVideoIndex)}
-};
-
-function addRecord(base){
-  const rec={id:recordId++,createdAt:new Date(),classification:'none',concentration:NaN,unit:'',calibrationSaved:false,...base};records.push(rec);selectedRecordId=rec.id;renderRecords();renderResults()
-}
+async function processFile(index,roiRel,diameter,channels,dt,nRep,gap){const v=$('reVideo');v.src=videoUrls[index];await waitEvent(v,'loadedmetadata');const dur=v.duration;if(!finite(dur)||dur<=0)throw new Error('Duração de vídeo inválida');const roi={x:roiRel.nx*v.videoWidth,y:roiRel.ny*v.videoHeight,valid:true,locked:true},data=[],total=Math.floor(dur/dt)+1;for(let j=0,t=0;t<=dur+1e-8;j++,t=j*dt){$('reProgress').textContent=`Processando ${index+1}/${videoFiles.length}: ${Math.min(100,Math.round(100*j/total))}%`;await seekVideo(v,Math.min(t,dur));const s=meanRoi(v,roi,diameter,channels);if(s){s.t=Math.min(t,dur);data.push(s)}}const peaks=detectPeaks(data,nRep,gap,channels);return{data,peaks,roi}}
+$('executeReprocess').onclick=async()=>{if(!videoFiles.length){alert('Adicione um ou mais vídeos.');return}if(!reRoi.valid)centerRoi($('reVideo'),reRoi);const v=$('reVideo');if(!v.videoWidth)await selectVideo(Math.max(0,selectedVideoIndex));const channels=channelsFrom('reChannels');if(!channels.length){alert('Selecione pelo menos um canal.');return}const rel={nx:reRoi.x/(v.videoWidth||1),ny:reRoi.y/(v.videoHeight||1)},diameter=roiDiameterFor('re'),dt=Math.max(.01,Number($('reFrameInterval').value)||.1),nRep=Math.max(1,Number($('reReplicates').value)||5),gap=Math.max(0,Number($('rePeakGap').value)||5);$('executeReprocess').disabled=true;try{for(let i=0;i<videoFiles.length;i++){const r=await processFile(i,rel,diameter,channels,dt,nRep,gap);reData=r.data;drawTemporal('reChart',reData,channels);addRecord({name:videoFiles[i].name.replace(/\.[^.]+$/,''),source:'Reprocessamento',channels,interval:dt,gap,nRep,roi:{nx:rel.nx,ny:rel.ny,diameter},data:r.data,peaks:r.peaks,videoName:videoFiles[i].name})}$('reProgress').textContent=`Concluído: ${videoFiles.length} vídeo(s) processado(s).`}catch(e){$('reProgress').textContent='Erro: '+e.message}finally{$('executeReprocess').disabled=false;if(selectedVideoIndex>=0)selectVideo(selectedVideoIndex)}};
+function addRecord(base){const rec={id:recordId++,createdAt:new Date(),classification:'none',concentration:NaN,unit:'',calibrationSaved:false,...base};records.push(rec);selectedRecordId=rec.id;renderRecords();renderResults()}
 function selectedRecord(){return records.find(r=>r.id===selectedRecordId)||records[0]||null}
-function renderRecords(){
-  const q=$('recordSearch').value.trim().toLowerCase(),tb=$('recordsTable').querySelector('tbody');tb.innerHTML='';
-  records.filter(r=>!q||r.name.toLowerCase().includes(q)).forEach(r=>{
-    const tr=document.createElement('tr');tr.className='recordRow'+(r.id===selectedRecordId?' selected':'');tr.onclick=e=>{if(e.target.closest('select,button,input'))return;selectedRecordId=r.id;renderRecords();renderResults()};
-    const dt=r.createdAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    tr.innerHTML=`<td><input type="checkbox" class="exportPick" data-id="${r.id}" ${exportSelected.has(r.id)?'checked':''}></td><td>${escapeHtml(r.name)}</td><td><select class="classSel" data-id="${r.id}"><option value="none">Sem classificação</option><option value="standard">Padrão</option><option value="sample">Amostra</option></select></td><td>${dt}</td><td><button class="trash" data-id="${r.id}">🗑</button></td>`;
-    tb.appendChild(tr);tr.querySelector('select').value=r.classification;
-  });
-  tb.querySelectorAll('.exportPick').forEach(c=>c.onchange=e=>{const id=Number(e.target.dataset.id);if(e.target.checked)exportSelected.add(id);else exportSelected.delete(id)});
-  tb.querySelectorAll('.classSel').forEach(s=>s.onchange=e=>{const r=records.find(x=>x.id===Number(e.target.dataset.id));if(!r)return;r.classification=e.target.value;if(r.classification!=='standard')r.calibrationSaved=false;selectedRecordId=r.id;renderRecords();renderResults()});
-  tb.querySelectorAll('.trash').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=Number(e.currentTarget.dataset.id),r=records.find(x=>x.id===id);if(r&&confirm(`Excluir definitivamente "${r.name}"?`)){records=records.filter(x=>x.id!==id);exportSelected.delete(id);if(selectedRecordId===id)selectedRecordId=records[0]?.id||null;renderRecords();renderResults()}});
-}
-$('recordSearch').oninput=renderRecords;
-$('selectAllRecords').onchange=e=>document.querySelectorAll('.exportPick').forEach(x=>{x.checked=e.target.checked;const id=Number(x.dataset.id);if(x.checked)exportSelected.add(id);else exportSelected.delete(id)});
-
-function regression(ch){
-  const std=records.filter(r=>r.classification==='standard'&&r.calibrationSaved&&finite(r.concentration)&&peakSignals(r,ch).length);
-  if(std.length<2)return{ok:false,msg:'São necessários pelo menos dois padrões válidos.'};
-  const units=[...new Set(std.map(r=>r.unit.trim()))];if(units.length!==1||!units[0])return{ok:false,msg:'Os padrões devem possuir a mesma unidade.'};
-  const pts=std.map(r=>({x:r.concentration,y:stat(peakSignals(r,ch)).mean})).sort((a,b)=>a.x-b.x);if(new Set(pts.map(p=>p.x)).size<2)return{ok:false,msg:'São necessárias pelo menos duas concentrações distintas.'};
-  const n=pts.length,xm=pts.reduce((s,p)=>s+p.x,0)/n,ym=pts.reduce((s,p)=>s+p.y,0)/n,sxx=pts.reduce((s,p)=>s+(p.x-xm)**2,0),sxy=pts.reduce((s,p)=>s+(p.x-xm)*(p.y-ym),0),slope=sxy/sxx,intercept=ym-slope*xm;
-  const res=pts.map(p=>p.y-(intercept+slope*p.x)),sse=res.reduce((s,e)=>s+e*e,0),sst=pts.reduce((s,p)=>s+(p.y-ym)**2,0),r2=sst?1-sse/sst:NaN,syx=n>2?Math.sqrt(sse/(n-2)):NaN,lod=finite(syx)&&slope?3.3*syx/Math.abs(slope):NaN,loq=finite(syx)&&slope?10*syx/Math.abs(slope):NaN;
-  return{ok:true,channel:ch,pts,slope,intercept,r2,syx,lod,loq,unit:units[0],n}
-}
-function resultForSample(rec,ch){
-  const reg=regression(ch),signals=peakSignals(rec,ch);if(!reg.ok||!signals.length||!reg.slope)return{ok:false,reg};
-  const sig=stat(signals),concs=signals.map(y=>(y-reg.intercept)/reg.slope),cs=stat(concs);return{ok:true,reg,sig,cs,concs}
-}
-function renderResults(){
-  if(!$('view-results').classList.contains('active'))return;
-  renderRecords();const rec=selectedRecord();if(!rec){drawTemporal('resultChart',[],[]);drawCalibration({ok:false});$('sampleMetrics').innerHTML='';$('calMetrics').innerHTML='';$('selectedRecordInfo').textContent='Nenhum registro selecionado.';$('standardPanel').classList.add('hidden');return}
-  $('selectedRecordInfo').textContent=`${rec.name} — ${rec.source} — ${rec.classification==='standard'?'Padrão':rec.classification==='sample'?'Amostra':'Sem classificação'}`;
-  document.querySelectorAll('#resultChannelTabs button').forEach(b=>b.classList.toggle('active',b.dataset.ch===resultChannel));
-  drawTemporal('resultChart',rec.data,[resultChannel]);
-  const reg=regression(resultChannel);drawCalibration(reg);$('calMetrics').innerHTML=reg.ok?[
-    ['Equação',`y = ${fmt(reg.slope,6)}x ${reg.intercept>=0?'+':'−'} ${fmt(Math.abs(reg.intercept),6)}`],['R²',fmt(reg.r2,6)],['Inclinação',fmt(reg.slope,6)],['Intercepto',fmt(reg.intercept,6)],['Sy/x',fmt(reg.syx,6)],['LD',finite(reg.lod)?`${fmt(reg.lod,3)} ${reg.unit}`:'—'],['LQ',finite(reg.loq)?`${fmt(reg.loq,3)} ${reg.unit}`:'—'],['Unidade',reg.unit]
-  ].map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v" style="font-size:${k==='Equação'?'13px':'17px'}">${v}</div></div>`).join(''):`<div class="note">${escapeHtml(reg.msg||'Curva não disponível.')}</div>`;
-  $('standardPanel').classList.toggle('hidden',rec.classification!=='standard');if(rec.classification==='standard'){$('standardConcentration').value=finite(rec.concentration)?rec.concentration:'';$('standardUnit').value=rec.unit||'';$('standardMsg').textContent=rec.calibrationSaved?'Padrão salvo e incluído na curva.':'Informe concentração/unidade e salve para incluir na curva.'}
-  if(rec.classification==='sample'){
-    const rr=resultForSample(rec,resultChannel);$('sampleMetrics').innerHTML=rr.ok?[
-      ['Sinal médio',fmt(rr.sig.mean,3)],['Concentração média',`${fmt(rr.cs.mean,6)} ${rr.reg.unit}`],['Desvio padrão (DP)',`${fmt(rr.cs.sd,6)} ${rr.reg.unit}`],['CV',`${fmt(rr.cs.cv,2)} %`]
-    ].map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(''):`<div class="note">${escapeHtml(rr.reg?.msg||'Não há calibração válida para este canal.')}</div>`;
-    $('resultMsg').textContent=rr.ok?'Resultado calculado individualmente para cada replicata e resumido pela média, DP e CV.':'';
-  }else if(rec.classification==='standard'){
-    const s=stat(peakSignals(rec,resultChannel));$('sampleMetrics').innerHTML=`<div class="metric"><div class="k">Sinal médio do padrão</div><div class="v">${fmt(s.mean,3)}</div></div>`;$('resultMsg').textContent='';
-  }else{$('sampleMetrics').innerHTML='<div class="note">Classifique o registro como Padrão ou Amostra para utilizá-lo analiticamente.</div>';$('resultMsg').textContent=''}
-}
+function renderRecords(){const q=$('recordSearch').value.trim().toLowerCase(),tb=$('recordsTable').querySelector('tbody');tb.innerHTML='';records.filter(r=>!q||r.name.toLowerCase().includes(q)).forEach(r=>{const tr=document.createElement('tr');tr.className='recordRow'+(r.id===selectedRecordId?' selected':'');tr.onclick=e=>{if(e.target.closest('select,button,input'))return;selectedRecordId=r.id;renderRecords();renderResults()};const dt=r.createdAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});tr.innerHTML=`<td><input type="checkbox" class="exportPick" data-id="${r.id}" ${exportSelected.has(r.id)?'checked':''}></td><td>${escapeHtml(r.name)}</td><td><select class="classSel" data-id="${r.id}"><option value="none">Sem classificação</option><option value="standard">Padrão</option><option value="sample">Amostra</option></select></td><td>${dt}</td><td><button class="trash" data-id="${r.id}">🗑</button></td>`;tb.appendChild(tr);tr.querySelector('select').value=r.classification});tb.querySelectorAll('.exportPick').forEach(c=>c.onchange=e=>{const id=Number(e.target.dataset.id);if(e.target.checked)exportSelected.add(id);else exportSelected.delete(id)});tb.querySelectorAll('.classSel').forEach(s=>s.onchange=e=>{const r=records.find(x=>x.id===Number(e.target.dataset.id));if(!r)return;r.classification=e.target.value;if(r.classification!=='standard')r.calibrationSaved=false;selectedRecordId=r.id;renderRecords();renderResults()});tb.querySelectorAll('.trash').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=Number(e.currentTarget.dataset.id),r=records.find(x=>x.id===id);if(r&&confirm(`Excluir definitivamente "${r.name}"?`)){records=records.filter(x=>x.id!==id);exportSelected.delete(id);if(selectedRecordId===id)selectedRecordId=records[0]?.id||null;renderRecords();renderResults()}})}
+$('recordSearch').oninput=renderRecords;$('selectAllRecords').onchange=e=>document.querySelectorAll('.exportPick').forEach(x=>{x.checked=e.target.checked;const id=Number(x.dataset.id);if(x.checked)exportSelected.add(id);else exportSelected.delete(id)});
+function regression(ch){const std=records.filter(r=>r.classification==='standard'&&r.calibrationSaved&&finite(r.concentration)&&peakSignals(r,ch).length);if(std.length<2)return{ok:false,msg:'São necessários pelo menos dois padrões válidos.'};const units=[...new Set(std.map(r=>r.unit.trim()))];if(units.length!==1||!units[0])return{ok:false,msg:'Os padrões devem possuir a mesma unidade.'};const pts=std.map(r=>{const s=stat(peakSignals(r,ch));return{x:r.concentration,y:s.mean,sd:s.sd,n:s.n,id:r.id,name:r.name}}).sort((a,b)=>a.x-b.x);if(new Set(pts.map(p=>p.x)).size<2)return{ok:false,msg:'São necessárias pelo menos duas concentrações distintas.'};const n=pts.length,xm=pts.reduce((s,p)=>s+p.x,0)/n,ym=pts.reduce((s,p)=>s+p.y,0)/n,sxx=pts.reduce((s,p)=>s+(p.x-xm)**2,0),sxy=pts.reduce((s,p)=>s+(p.x-xm)*(p.y-ym),0),slope=sxy/sxx,intercept=ym-slope*xm,res=pts.map(p=>p.y-(intercept+slope*p.x)),sse=res.reduce((s,e)=>s+e*e,0),sst=pts.reduce((s,p)=>s+(p.y-ym)**2,0),r2=sst?1-sse/sst:NaN,syx=n>2?Math.sqrt(sse/(n-2)):NaN,lod=finite(syx)&&slope?3.3*syx/Math.abs(slope):NaN,loq=finite(syx)&&slope?10*syx/Math.abs(slope):NaN;return{ok:true,channel:ch,pts,slope,intercept,r2,syx,lod,loq,unit:units[0],n,rangeMin:Math.min(...pts.map(p=>p.x)),rangeMax:Math.max(...pts.map(p=>p.x))}}
+function resultForSample(rec,ch){const reg=regression(ch),signals=peakSignals(rec,ch);if(!reg.ok||!signals.length||!reg.slope)return{ok:false,reg};const sig=stat(signals),concs=signals.map(y=>(y-reg.intercept)/reg.slope),cs=stat(concs);return{ok:true,reg,sig,cs,concs}}
+function niceMax(v){if(!finite(v)||v<=0)return 1;const p=10**Math.floor(Math.log10(v)),n=v/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p}
+function drawCalibration(reg,rec){const c=$('calChart'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.max(320,Math.round(rect.width||650)),h=Math.max(280,Math.round(rect.height||360));c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.fillStyle='#fff';x.fillRect(0,0,w,h);const m={l:62,r:22,t:36,b:52},plotW=w-m.l-m.r,plotH=h-m.t-m.b;x.font='12px Arial';x.fillStyle='#475467';x.fillText('Sinal (contagens)',8,20);x.fillText(reg.ok?`Concentração (${reg.unit})`:'Concentração',Math.max(m.l,w-150),h-12);for(let v=0;v<=255;v+=51){const py=h-m.b-v/255*plotH;x.strokeStyle='#edf1f6';x.beginPath();x.moveTo(m.l,py);x.lineTo(w-m.r,py);x.stroke();x.fillStyle='#667085';x.fillText(String(v),m.l-38,py+4)}x.strokeStyle='#cdd5df';x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();if(!reg.ok){x.fillStyle='#98a2b3';x.fillText('Curva não disponível',m.l+18,m.t+28);return}const xmax=niceMax(Math.max(reg.rangeMax,1)*1.08),xmin=0,X=v=>m.l+(v-xmin)/(xmax-xmin||1)*plotW,Y=v=>h-m.b-clamp(v,0,255)/255*plotH;const ticks=5;for(let i=0;i<=ticks;i++){const val=xmin+(xmax-xmin)*i/ticks,px=X(val);x.strokeStyle='#edf1f6';x.beginPath();x.moveTo(px,m.t);x.lineTo(px,h-m.b);x.stroke();x.fillStyle='#667085';x.fillText(Number(val.toPrecision(3)).toString(),px-8,h-m.b+18)}const col={r:'#dc2626',g:'#16a34a',b:'#2563eb'}[reg.channel];x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(X(xmin),Y(reg.intercept+reg.slope*xmin));x.lineTo(X(xmax),Y(reg.intercept+reg.slope*xmax));x.stroke();reg.pts.forEach(p=>{const px=X(p.x),py=Y(p.y);if(finite(p.sd)&&p.sd>0){x.strokeStyle='#344054';x.lineWidth=1;x.beginPath();x.moveTo(px,Y(p.y-p.sd));x.lineTo(px,Y(p.y+p.sd));x.moveTo(px-4,Y(p.y-p.sd));x.lineTo(px+4,Y(p.y-p.sd));x.moveTo(px-4,Y(p.y+p.sd));x.lineTo(px+4,Y(p.y+p.sd));x.stroke()}x.fillStyle=col;x.beginPath();x.arc(px,py,5,0,Math.PI*2);x.fill();x.strokeStyle='#fff';x.lineWidth=1;x.stroke()});if(rec&&rec.classification==='sample'){const rr=resultForSample(rec,reg.channel);if(rr.ok&&finite(rr.cs.mean)&&finite(rr.sig.mean)){const sx=rr.cs.mean,sy=rr.sig.mean;if(sx>=xmin&&sx<=xmax&&sy>=0&&sy<=255){const px=X(sx),py=Y(sy);x.setLineDash([5,4]);x.strokeStyle='#111827';x.lineWidth=1;x.beginPath();x.moveTo(m.l,py);x.lineTo(px,py);x.lineTo(px,h-m.b);x.stroke();x.setLineDash([]);x.fillStyle='#fff';x.strokeStyle='#111827';x.lineWidth=2;x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.fill();x.stroke();x.fillStyle='#111827';x.fillText('Amostra',Math.min(px+8,w-m.r-55),Math.max(m.t+14,py-8))}}}x.fillStyle=col;x.fillRect(m.l+8,12,18,3);x.fillStyle='#344054';x.fillText('Pontos de calibração',m.l+32,17);x.strokeStyle=col;x.beginPath();x.moveTo(m.l+160,14);x.lineTo(m.l+182,14);x.stroke();x.fillStyle='#344054';x.fillText('Ajuste linear',m.l+188,17)}
+function renderResults(){if(!$('view-results').classList.contains('active'))return;renderRecords();const rec=selectedRecord();if(!rec){drawTemporal('resultChart',[],[]);drawCalibration({ok:false});$('sampleMetrics').innerHTML='';$('calMetrics').innerHTML='';$('selectedRecordInfo').textContent='Nenhum registro selecionado.';$('standardPanel').classList.add('hidden');return}$('selectedRecordInfo').textContent=`${rec.name} — ${rec.source} — ${rec.classification==='standard'?'Padrão':rec.classification==='sample'?'Amostra':'Sem classificação'}`;document.querySelectorAll('#resultChannelTabs button').forEach(b=>b.classList.toggle('active',b.dataset.ch===resultChannel));const reg=regression(resultChannel);drawCalibration(reg,rec);drawTemporal('resultChart',rec.data,[resultChannel]);$('calMetrics').innerHTML=reg.ok?[['Equação',`y = ${fmt(reg.slope,6)}x ${reg.intercept>=0?'+':'−'} ${fmt(Math.abs(reg.intercept),6)}`],['R²',fmt(reg.r2,6)],['Faixa',`${fmt(reg.rangeMin,3)}–${fmt(reg.rangeMax,3)} ${reg.unit}`],['Padrões',String(reg.n)],['Sy/x',fmt(reg.syx,6)],['LD',finite(reg.lod)?`${fmt(reg.lod,3)} ${reg.unit}`:'—'],['LQ',finite(reg.loq)?`${fmt(reg.loq,3)} ${reg.unit}`:'—'],['Canal',resultChannel.toUpperCase()]].map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v" style="font-size:${k==='Equação'||k==='Faixa'?'13px':'17px'}">${v}</div></div>`).join(''):`<div class="note">${escapeHtml(reg.msg||'Curva não disponível.')}</div>`;$('standardPanel').classList.toggle('hidden',rec.classification!=='standard');if(rec.classification==='standard'){$('standardConcentration').value=finite(rec.concentration)?rec.concentration:'';$('standardUnit').value=rec.unit||'';$('standardMsg').textContent=rec.calibrationSaved?'Padrão salvo e incluído na curva.':'Informe concentração/unidade e salve para incluir na curva.'}if(rec.classification==='sample'){const rr=resultForSample(rec,resultChannel);$('sampleMetrics').innerHTML=rr.ok?[['Sinal médio',`${fmt(rr.sig.mean,3)} contagens`],['Concentração média',`${fmt(rr.cs.mean,6)} ${rr.reg.unit}`],['Desvio padrão (DP)',`${fmt(rr.cs.sd,6)} ${rr.reg.unit}`],['CV',`${fmt(rr.cs.cv,2)} %`]].map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(''):`<div class="note">${escapeHtml(rr.reg?.msg||'Não há calibração válida para este canal.')}</div>`;$('resultMsg').textContent=rr.ok?'Resultado calculado individualmente para cada replicata e resumido pela média, DP e CV.':''}else if(rec.classification==='standard'){const s=stat(peakSignals(rec,resultChannel));$('sampleMetrics').innerHTML=`<div class="metric"><div class="k">Sinal médio do padrão</div><div class="v">${fmt(s.mean,3)} contagens</div></div>`;$('resultMsg').textContent=''}else{$('sampleMetrics').innerHTML='<div class="note">Classifique o registro como Padrão ou Amostra para utilizá-lo analiticamente.</div>';$('resultMsg').textContent=''}}
 document.querySelectorAll('#resultChannelTabs button').forEach(b=>b.onclick=()=>{resultChannel=b.dataset.ch;renderResults()});
-$('saveStandard').onclick=()=>{
-  const r=selectedRecord();if(!r||r.classification!=='standard')return;const c=Number($('standardConcentration').value),u=$('standardUnit').value.trim();if(!finite(c)||!u){$('standardMsg').textContent='Informe uma concentração válida e a unidade.';return}
-  const other=records.filter(x=>x.id!==r.id&&x.classification==='standard'&&x.calibrationSaved&&x.unit);if(other.some(x=>x.unit!==u)){if(!confirm('Existem padrões salvos com outra unidade. Salvar assim tornará a calibração inválida até que as unidades sejam uniformizadas. Continuar?'))return}
-  r.concentration=c;r.unit=u;r.calibrationSaved=true;$('standardMsg').textContent='Padrão salvo e incluído na curva.';renderResults()
-};
-
+$('saveStandard').onclick=()=>{const r=selectedRecord();if(!r||r.classification!=='standard')return;const c=Number($('standardConcentration').value),u=$('standardUnit').value.trim();if(!finite(c)||!u){$('standardMsg').textContent='Informe uma concentração válida e a unidade.';return}const other=records.filter(x=>x.id!==r.id&&x.classification==='standard'&&x.calibrationSaved&&x.unit);if(other.some(x=>x.unit!==u)){if(!confirm('Existem padrões salvos com outra unidade. Salvar assim tornará a calibração inválida até que as unidades sejam uniformizadas. Continuar?'))return}r.concentration=c;r.unit=u;r.calibrationSaved=true;$('standardMsg').textContent='Padrão salvo e incluído na curva.';renderResults()};
 function selectedForExport(){const ids=[...exportSelected];return ids.length?records.filter(r=>ids.includes(r.id)):(selectedRecord()?[selectedRecord()]:[])}
-$('exportSummary').onclick=()=>{
-  const list=selectedForExport();if(!list.length){alert('Selecione pelo menos um registro.');return}
-  const lines=['nome;origem;classificacao;canal;sinal_medio;dp_sinal;cv_sinal_percent;concentracao_media;dp_concentracao;cv_concentracao_percent;unidade'];
-  list.forEach(r=>{['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const ss=stat(peakSignals(r,ch));let cm='',cd='',cc='',unit='';if(r.classification==='sample'){const rr=resultForSample(r,ch);if(rr.ok){cm=fmtDot(rr.cs.mean);cd=fmtDot(rr.cs.sd);cc=fmtDot(rr.cs.cv);unit=rr.reg.unit}}else if(r.classification==='standard'&&r.calibrationSaved){cm=fmtDot(r.concentration);unit=r.unit}lines.push([r.name,r.source,r.classification,ch.toUpperCase(),fmtDot(ss.mean),fmtDot(ss.sd),fmtDot(ss.cv),cm,cd,cc,unit].map(csvCell).join(';'))})});
-  downloadText(lines.join('\n'),'CL_RGB_resumo.csv')
-};
-$('exportFull').onclick=()=>{
-  const list=selectedForExport();if(!list.length){alert('Selecione pelo menos um registro.');return}
-  const lines=['CL RGB Analyzer - exportação completa'];
-  list.forEach(r=>{
-    lines.push('',`REGISTRO;${csvCell(r.name)}`,`origem;${csvCell(r.source)}`,`classificacao;${csvCell(r.classification)}`,`intervalo_frames_s;${fmtDot(r.interval)}`,`intervalo_min_picos_s;${fmtDot(r.gap)}`,`numero_replicatas;${r.nRep}`,`roi_nx;${fmtDot(r.roi.nx)}`,`roi_ny;${fmtDot(r.roi.ny)}`,`roi_diametro_px;${r.roi.diameter}`);
-    if(r.classification==='standard'&&r.calibrationSaved){lines.push(`concentracao_padrao;${fmtDot(r.concentration)}`,`unidade;${csvCell(r.unit)}`)}
-    lines.push('DADOS TEMPORAIS','tempo_s;R_mean;G_mean;B_mean');
-    r.data.forEach(d=>lines.push(`${fmtDot(d.t)};${fmtDot(d.r)};${fmtDot(d.g)};${fmtDot(d.b)}`));
-    lines.push('MAXIMOS POR REPLICATA','replicata;tempo_R;R_max;tempo_G;G_max;tempo_B;B_max');
-    r.peaks.forEach(p=>lines.push(`${p.rep};${fmtDot(p.tr)};${fmtDot(p.r)};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));
-    ['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const reg=regression(ch);if(reg.ok)lines.push(`CALIBRACAO_${ch.toUpperCase()};slope=${fmtDot(reg.slope)};intercept=${fmtDot(reg.intercept)};R2=${fmtDot(reg.r2)};Syx=${fmtDot(reg.syx)};LD=${fmtDot(reg.lod)};LQ=${fmtDot(reg.loq)};unidade=${csvCell(reg.unit)}`)})
-  });
-  downloadText(lines.join('\n'),'CL_RGB_resultados_completos.csv')
-};
-
+$('exportSummary').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Selecione pelo menos um registro.');return}const lines=['nome;origem;classificacao;canal;sinal_medio;dp_sinal;cv_sinal_percent;concentracao_media;dp_concentracao;cv_concentracao_percent;unidade'];list.forEach(r=>{['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const ss=stat(peakSignals(r,ch));let cm='',cd='',cc='',unit='';if(r.classification==='sample'){const rr=resultForSample(r,ch);if(rr.ok){cm=fmtDot(rr.cs.mean);cd=fmtDot(rr.cs.sd);cc=fmtDot(rr.cs.cv);unit=rr.reg.unit}}else if(r.classification==='standard'&&r.calibrationSaved){cm=fmtDot(r.concentration);unit=r.unit}lines.push([r.name,r.source,r.classification,ch.toUpperCase(),fmtDot(ss.mean),fmtDot(ss.sd),fmtDot(ss.cv),cm,cd,cc,unit].map(csvCell).join(';'))})});downloadText(lines.join('\n'),'CL_RGB_resumo.csv')};
+$('exportFull').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Selecione pelo menos um registro.');return}const lines=['CL RGB Analyzer - exportação completa'];list.forEach(r=>{lines.push('',`REGISTRO;${csvCell(r.name)}`,`origem;${csvCell(r.source)}`,`classificacao;${csvCell(r.classification)}`,`intervalo_frames_s;${fmtDot(r.interval)}`,`intervalo_min_picos_s;${fmtDot(r.gap)}`,`numero_replicatas;${r.nRep}`,`roi_nx;${fmtDot(r.roi.nx)}`,`roi_ny;${fmtDot(r.roi.ny)}`,`roi_diametro_px;${r.roi.diameter}`);if(r.classification==='standard'&&r.calibrationSaved)lines.push(`concentracao_padrao;${fmtDot(r.concentration)}`,`unidade;${csvCell(r.unit)}`);lines.push('DADOS TEMPORAIS','tempo_s;R_mean;G_mean;B_mean');r.data.forEach(d=>lines.push(`${fmtDot(d.t)};${fmtDot(d.r)};${fmtDot(d.g)};${fmtDot(d.b)}`));lines.push('MAXIMOS POR REPLICATA','replicata;tempo_R;R_max;tempo_G;G_max;tempo_B;B_max');r.peaks.forEach(p=>lines.push(`${p.rep};${fmtDot(p.tr)};${fmtDot(p.r)};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const reg=regression(ch);if(reg.ok)lines.push(`CALIBRACAO_${ch.toUpperCase()};slope=${fmtDot(reg.slope)};intercept=${fmtDot(reg.intercept)};R2=${fmtDot(reg.r2)};Syx=${fmtDot(reg.syx)};LD=${fmtDot(reg.lod)};LQ=${fmtDot(reg.loq)};unidade=${csvCell(reg.unit)}`)})});downloadText(lines.join('\n'),'CL_RGB_resultados_completos.csv')};
 drawTemporal('liveChart',[],['g','b']);drawTemporal('reChart',[],['g','b']);renderRecords();
 </script>
 </body>
