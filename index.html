@@ -38,6 +38,20 @@ button,input,select{font:inherit}button{cursor:pointer}
 .videoList{max-height:390px;overflow:auto}.videoItem{display:flex;justify-content:space-between;align-items:center;padding:9px;border-bottom:1px solid #eef1f6}.videoItem.selected{background:#eef4ff}.videoItem button{border:0;background:transparent;color:#344054}
 .note{font-size:12px;color:var(--muted);line-height:1.4}.okText{color:var(--green)}.badText{color:var(--red)}.resultHeader{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.channelTabs{display:flex;gap:5px}.channelTabs button{min-width:42px;border:1px solid #cfd8e8;background:#fff;color:#344054;border-radius:7px;padding:6px 10px}.channelTabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .stdPanel{border:1px solid #b7cef8;background:#f8fbff;border-radius:10px;padding:12px;margin-top:12px}.hidden{display:none!important}.exportRow{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap}.footer{font-size:12px;color:var(--muted);padding:12px 4px;text-align:right}.pill{display:inline-flex;gap:6px;align-items:center;background:#eef4ff;color:#174ea6;border-radius:999px;padding:5px 9px;font-size:12px}.progress{font-size:12px;color:var(--green);font-weight:700;margin-top:8px}
+/* Reprocessing video controls, independent of the analytical acquisition interval. */
+.rePreviewBackdrop{display:none;position:fixed;inset:0;background:#071327b3;z-index:1090}
+.rePreviewBackdrop.active{display:block}
+.rePreviewCard.rePreviewExpanded{position:fixed;inset:12px;z-index:1091;overflow:auto;max-height:calc(100dvh - 24px);box-shadow:0 18px 80px #0007;padding:16px;background:#fff}
+.rePreviewExpanded .videoWrap{margin:0 auto;max-height:60dvh}
+.rePreviewExpanded .reTransport{max-width:950px;margin:10px auto}
+.rePreviewExpanded .roiButtons,.rePreviewExpanded .field,.rePreviewExpanded .reRoiActions{max-width:950px;margin-left:auto;margin-right:auto}
+.rePreviewExpanded .row.spaced{margin-bottom:9px}
+.reFrameTools{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:7px 0}
+.reFrameTools label{font-size:12px;color:#475467;display:flex;flex-direction:column;gap:3px}
+.reFrameTools input,.reFrameTools select{font-size:13px;padding:6px 8px;height:34px}
+.reFrameTools .btn{font-size:12px;padding:7px 11px}
+#reSeekBar{height:22px;touch-action:pan-x}
+.rePreviewExpanded .videoWrap .overlay{cursor:crosshair}
 /* Independent video transport: the ROI overlay remains clickable while the seek bar stays accessible. */
 .reTransport{margin-top:9px;padding:10px;border:1px solid #e4e8f0;border-radius:9px;background:#f8fbff}
 .reTransport .reTransportRow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -68,12 +82,12 @@ button,input,select{font:inherit}button{cursor:pointer}
 
   <section id="view-reproc" class="view">
     <div class="grid4">
-      <div class="card"><div class="row spaced"><h2>Video preview</h2><label for="videoFiles" class="btn secondary" style="font-size:12px;padding:7px 9px">+ Add videos</label></div><div class="videoWrap"><video id="reVideo" playsinline muted preload="metadata"></video><canvas id="reOverlay" class="overlay"></canvas></div>
+      <div id="rePreviewBackdrop" class="rePreviewBackdrop"></div><div class="card rePreviewCard" id="rePreviewCard"><div class="row spaced"><h2>Video preview</h2><div class="row"><button id="reExpandPreview" type="button" class="btn secondary" title="Enlarge the preview to position the ROI precisely">⛶ Expand preview</button><label for="videoFiles" class="btn secondary" style="font-size:12px;padding:7px 9px">+ Add videos</label></div></div><div class="videoWrap" id="reVideoWrap"><video id="reVideo" playsinline muted preload="metadata"></video><canvas id="reOverlay" class="overlay"></canvas></div>
         <div class="reTransport" aria-label="Video playback and frame selection">
-          <div class="reTransportRow"><button type="button" id="rePlayPause" class="btn secondary" disabled>▶ Play</button><button type="button" id="reStepBack" class="btn secondary" title="Step backward by the selected frame interval" disabled>◀ −1 step</button><button type="button" id="reStepForward" class="btn secondary" title="Step forward by the selected frame interval" disabled>+1 step ▶</button><span id="reTimeLabel" class="reTime">0.00 / 0.00 s</span></div>
-          <input type="range" id="reSeekBar" min="0" max="0" step="0.01" value="0" disabled aria-label="Video timeline: drag to select the frame">
-          <div class="note">Play or drag the timeline to a frame with visible emission. Pause, position the ROI over the image, click <b>Lock ROI</b>, then run reprocessing. The ROI stays at the same relative position in other videos.</div>
-        </div><div class="roiButtons"><button id="reRoiManual" class="btn secondary">Select ROI manually</button><button id="reRoiAuto" class="btn">Select ROI automatically</button></div><div class="field" style="margin-top:12px"><label>ROI diameter (px)</label><input id="reRoiDiameter" type="number" value="40" min="4" step="1"></div><div class="row"><button id="reRoiLock" class="btn secondary">Lock ROI</button><button id="reRoiClear" class="btn secondary">Clear ROI</button></div></div>
+          <div class="reTransportRow"><button type="button" id="rePlayPause" class="btn secondary" disabled>▶ Play</button><button type="button" id="reStepBack" class="btn secondary" title="Previous frame / selected preview step" disabled>◀ Previous</button><button type="button" id="reStepForward" class="btn secondary" title="Next frame / selected preview step" disabled>Next ▶</button><span id="reTimeLabel" class="reTime">0.000 / 0.000 s</span></div>
+          <input type="range" id="reSeekBar" min="0" max="0" step="0.001" value="0" disabled aria-label="Video timeline: drag to select the frame"><div class="reFrameTools"><label>Preview step (s)<select id="rePreviewStep"><option value="0.033333333333">0.033 (≈ 1 frame at 30 fps)</option><option value="0.05">0.050</option><option value="0.1">0.100</option><option value="0.2">0.200</option><option value="0.3">0.300</option></select></label><label>Go to time (s)<input id="reGoTime" type="number" min="0" step="0.001" value="0.000" style="width:115px"></label><button type="button" id="reGoTimeBtn" class="btn secondary" disabled>Go to frame</button></div>
+          <div class="note">Play, drag the timeline, use Previous / Next, or enter a time to select a luminous frame. Then place and lock the ROI. “Preview step” is independent of “Analyzed frame interval”. The video’s actual frame rate limits precision.</div>
+        </div><div class="roiButtons"><button id="reRoiManual" class="btn secondary">Select ROI manually</button><button id="reRoiAuto" class="btn">Select ROI automatically</button></div><div class="field" style="margin-top:12px"><label>ROI diameter (px)</label><input id="reRoiDiameter" type="number" value="40" min="4" step="1"></div><div class="row reRoiActions"><button id="reRoiLock" class="btn secondary">Lock ROI</button><button id="reRoiClear" class="btn secondary">Clear ROI</button></div></div>
       <div class="card"><h2>RGB time profile</h2><div class="channels" id="reChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><canvas id="reChart" class="chart"></canvas><div id="reProgress" class="progress"></div></div>
       <div class="card"><h2>Reprocessing settings</h2><div class="field"><label>Number of replicates</label><input id="reReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Minimum time between peaks (s)</label><input id="rePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Analyzed frame interval (s)</label><input id="reFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><button id="executeReprocess" class="btn" style="width:100%;margin-top:12px">▶ Run reprocessing</button></div>
       <div class="card"><div class="row spaced"><h2>Videos loaded for reprocessing</h2><label class="btn secondary" style="display:inline-block">+ Add videos<input id="videoFiles" type="file" accept="video/*" multiple hidden></label></div><div id="videoList" class="videoList"></div></div>
@@ -98,7 +112,7 @@ button,input,select{font:inherit}button{cursor:pointer}
   </section>
   <div class="footer">CL RGB Analyzer — test version</div>
 </div>
-<select id="cameraSelect" class="hidden"></select><canvas id="workCanvas" class="hidden"></canvas>
+<select id="cameraSelect" class="hidden"></select><canvas id="autoWorkCanvas" hidden></canvas><canvas id="workCanvas" class="hidden"></canvas>
 <script>
 'use strict';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),finite=v=>Number.isFinite(v);
@@ -113,16 +127,16 @@ const waitEvent=(el,name)=>new Promise((resolve,reject)=>{const ok=()=>{cleanup(
 let stream=null,recorder=null,chunks=[],currentVideoBlob=null,serialPort=null,serialReader=null,serialRunning=false,serialBuffer='',currentSerialRep=null,serialRepWindows=[];
 let liveTimer=null,liveStartPerf=0,liveData=[],liveActive=false,liveRoi={x:0,y:0,locked:false,valid:false},reRoi={x:0,y:0,locked:false,valid:false};let liveAutoRoiEnabled=false,liveAutoRoiBest=-Infinity,liveAutoRoiLastScan=0;
 let liveAutoBaseline=null,liveAutoRoiFound=false;
-let reAutoRoiEnabled=false,reAutoRoiLastResult=null,reprocessRunActive=false;
+let reAutoRoiEnabled=false,reAutoRoiLastResult=null,reprocessRunActive=false,rePreviewAutoSearching=false,reExpanded=false;
 const AUTO_ROI_MIN_DELTA=1.5;
 let videoFiles=[],videoUrls=[],selectedVideoIndex=-1,reData=[],records=[],recordId=1,selectedRecordId=null,resultChannel='g',exportSelected=new Set();
-let reTimelineDragging=false;
+let reTimelineDragging=false,reSeekSequence=0,reRequestedPreviewTime=0;
 function channelsFrom(containerId){return[...document.querySelectorAll(`#${containerId} input[type=checkbox]`)].filter(x=>x.checked).map(x=>x.value)}
 function mode(){return document.querySelector('input[name=liveMode]:checked')?.value||'arduino'}
 function log(msg){const el=$('serialLog');el.textContent+=`${new Date().toLocaleTimeString()}  ${msg}\n`;el.scrollTop=el.scrollHeight}
 function setConnection(which,on){const el=$(which+'State');el.textContent=on?(which==='camera'?'connected':'connected'):(which==='camera'?'disconnected':'disconnected');el.classList.toggle('on',on);const dot=$(which+'Conn').querySelector('.dot');if(dot)dot.classList.toggle('on',on)}
 function ensureDots(){['camera','arduino'].forEach(k=>{const main=$(k+'Conn').querySelector('.connMain');if(!main.querySelector('.dot')){const d=document.createElement('span');d.className='dot';main.insertBefore(d,main.children[1])}})}ensureDots();
-document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+btn.dataset.tab).classList.add('active');requestAnimationFrame(()=>{drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()})});
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{if(btn.dataset.tab!=='reproc'&&reExpanded)setRePreviewExpanded(false);document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+btn.dataset.tab).classList.add('active');requestAnimationFrame(()=>{drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()})});
 async function listCameras(){try{const dev=await navigator.mediaDevices.enumerateDevices(),cams=dev.filter(d=>d.kind==='videoinput');$('cameraSelect').innerHTML='';cams.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`Camera ${i+1}`;$('cameraSelect').appendChild(o)});return cams}catch(e){log('Error listing cameras: '+e.message);return[]}}
 async function connectCamera(){try{if(stream)stream.getTracks().forEach(t=>t.stop());let cams=await listCameras();if(!cams.length){const p=await navigator.mediaDevices.getUserMedia({video:true,audio:false});p.getTracks().forEach(t=>t.stop());cams=await listCameras()}let id=$('cameraSelect').value||cams[0]?.deviceId;if(cams.length>1){const menu=cams.map((c,i)=>`${i+1}. ${c.label||'Camera '+(i+1)}`).join('\n'),ans=prompt(`Select video source:\n${menu}`,'1'),idx=clamp((Number(ans)||1)-1,0,cams.length-1);id=cams[idx].deviceId;$('cameraSelect').value=id}stream=await navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id}}:true,audio:false});$('liveVideo').srcObject=stream;await $('liveVideo').play();setConnection('camera',true);centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);log('Camera connected.')}catch(e){setConnection('camera',false);log('Failed to connect camera: '+e.message)}}$('cameraConn').onclick=connectCamera;
 async function connectArduino(){try{if(serialPort){await disconnectArduino();return}if(!('serial'in navigator)){alert('Web Serial is not supported in this browser. Use Chrome/Edge over HTTPS.');return}serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:9600});setConnection('arduino',true);serialRunning=true;readSerial();log('Arduino connected.')}catch(e){setConnection('arduino',false);log('Failed to connect Arduino: '+e.message);serialPort=null}}
@@ -131,7 +145,20 @@ async function sendSerial(text){if(!serialPort)throw new Error('Arduino not conn
 async function readSerial(){while(serialPort&&serialRunning){try{serialReader=serialPort.readable.getReader();while(serialRunning){const{value,done}=await serialReader.read();if(done)break;serialBuffer+=new TextDecoder().decode(value,{stream:true});let i;while((i=serialBuffer.indexOf('\n'))>=0){const line=serialBuffer.slice(0,i).replace(/\r/g,'').trim();serialBuffer=serialBuffer.slice(i+1);if(line)handleSerialLine(line)}}}catch(e){if(serialRunning)log('Serial error: '+e.message)}finally{try{serialReader?.releaseLock()}catch(e){}serialReader=null}break}}
 function handleSerialLine(line){log(line);let m=line.match(/Replicata\s*=\s*(\d+)/i);if(m&&liveActive){const rep=Number(m[1]),t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}currentSerialRep=rep;serialRepWindows.push({rep,start:t,end:NaN})}if(/Fim da sequencia analitica/i.test(line)){const t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}currentSerialRep=null;if(liveActive)stopLiveAcquisition(true)}}
 function videoDims(v){return{w:v.videoWidth||v.clientWidth||1,h:v.videoHeight||v.clientHeight||1}}function centerRoi(video,roi){const{w,h}=videoDims(video);roi.x=w/2;roi.y=h/2;roi.valid=true}function clearRoi(roi,canvas){roi.valid=false;roi.locked=false;canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height)}
-function fitVideoWrap(video){const wrap=video.closest('.videoWrap');if(!wrap)return;if(video.videoWidth&&video.videoHeight){wrap.style.aspectRatio=`${video.videoWidth} / ${video.videoHeight}`}}function syncOverlay(video,canvas){fitVideoWrap(video);const r=video.getBoundingClientRect(),dpr=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.height*dpr))}function roiDiameterFor(which){return Math.max(4,Number($(which==='live'?'liveRoiDiameter':'reRoiDiameter').value)||40)}
+function fitVideoWrap(video){
+  const wrap=video.closest('.videoWrap');if(!wrap)return;
+  if(video.videoWidth&&video.videoHeight){
+    const ratio=video.videoWidth/video.videoHeight;
+    wrap.style.aspectRatio=`${video.videoWidth} / ${video.videoHeight}`;
+    if(video.id==='reVideo'&&reExpanded){
+      const card=$('rePreviewCard');
+      const maxW=Math.max(250,card.clientWidth-45);
+      const maxH=Math.max(200,window.innerHeight-375);
+      const width=Math.min(maxW,maxH*ratio);
+      wrap.style.width=`${Math.floor(width)}px`;
+    }else if(video.id==='reVideo')wrap.style.width='';
+  }
+}function syncOverlay(video,canvas){fitVideoWrap(video);const r=video.getBoundingClientRect(),dpr=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.height*dpr))}function roiDiameterFor(which){return Math.max(4,Number($(which==='live'?'liveRoiDiameter':'reRoiDiameter').value)||40)}
 function drawRoi(video,canvas,roi){syncOverlay(video,canvas);const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);if(!roi.valid)return;const{w,h}=videoDims(video),rect=video.getBoundingClientRect(),sx=rect.width/w,sy=rect.height/h;ctx.scale(dpr,dpr);const x=roi.x*sx,y=roi.y*sy,rad=roiDiameterFor(video===$('liveVideo')?'live':'re')/2*Math.min(sx,sy);ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ffffff88';ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y);ctx.moveTo(x,y-8);ctx.lineTo(x,y+8);ctx.stroke()}
 function overlayPointer(video,canvas,roi){let dragging=false;const move=e=>{if(roi.locked)return;const rect=canvas.getBoundingClientRect(),{w,h}=videoDims(video);roi.x=clamp((e.clientX-rect.left)/rect.width*w,0,w);roi.y=clamp((e.clientY-rect.top)/rect.height*h,0,h);roi.valid=true;drawRoi(video,canvas,roi)};canvas.onpointerdown=e=>{dragging=true;canvas.setPointerCapture(e.pointerId);move(e)};canvas.onpointermove=e=>{if(dragging)move(e)};canvas.onpointerup=e=>{dragging=false;try{canvas.releasePointerCapture(e.pointerId)}catch(_){}}}overlayPointer($('liveVideo'),$('liveOverlay'),liveRoi);overlayPointer($('reVideo'),$('reOverlay'),reRoi);[$('liveVideo'),$('reVideo')].forEach(v=>{v.addEventListener('loadedmetadata',()=>{fitVideoWrap(v);drawRoi(v,v===$('liveVideo')?$('liveOverlay'):$('reOverlay'),v===$('liveVideo')?liveRoi:reRoi)});v.addEventListener('resize',()=>{fitVideoWrap(v);drawRoi(v,v===$('liveVideo')?$('liveOverlay'):$('reOverlay'),v===$('liveVideo')?liveRoi:reRoi)})});
 function meanRoi(video,roi,diameter,selected){if(!roi.valid||!video.videoWidth)return null;const c=$('workCanvas'),ctx=c.getContext('2d',{willReadFrequently:true}),w=video.videoWidth,h=video.videoHeight,rad=diameter/2,x0=Math.max(0,Math.floor(roi.x-rad)),y0=Math.max(0,Math.floor(roi.y-rad)),x1=Math.min(w,Math.ceil(roi.x+rad)),y1=Math.min(h,Math.ceil(roi.y+rad)),ww=x1-x0,hh=y1-y0;c.width=Math.max(1,ww);c.height=Math.max(1,hh);ctx.drawImage(video,x0,y0,ww,hh,0,0,ww,hh);const img=ctx.getImageData(0,0,ww,hh).data;let sr=0,sg=0,sb=0,n=0;for(let yy=0;yy<y1-y0;yy++)for(let xx=0;xx<ww;xx++){const dx=x0+xx-roi.x,dy=y0+yy-roi.y;if(dx*dx+dy*dy>rad*rad)continue;const i=(yy*ww+xx)*4;sr+=img[i];sg+=img[i+1];sb+=img[i+2];n++}if(!n)return null;return{r:selected.includes('r')?sr/n:NaN,g:selected.includes('g')?sg/n:NaN,b:selected.includes('b')?sb/n:NaN,pixels:n}}
@@ -192,55 +219,77 @@ async function captureLiveAutoBaseline(video){
   liveAutoRoiFound=false;
   return !!liveAutoBaseline;
 }
+// Efficient spatial search for reprocessing only; live-acquisition detection is unchanged.
+function findReprocessAutoCandidate(video,diameter,baseline){
+  if(!baseline||!video.videoWidth)return null;
+  const {w,h,scale,data:base}=baseline;
+  const c=$('autoWorkCanvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(video,0,0,w,h);
+  const pixels=ctx.getImageData(0,0,w,h).data;
+  const stride=w+1,integral=new Float64Array(stride*(h+1));
+  for(let y=1;y<=h;y++){
+    let rowSum=0;
+    for(let x=1;x<=w;x++){
+      const px=((y-1)*w+x-1),pi=px*4,bi=px*3;
+      const baseR=base[bi],baseG=base[bi+1],baseB=base[bi+2];
+      const dr=Math.max(0,pixels[pi]-baseR),dg=Math.max(0,pixels[pi+1]-baseG),db=Math.max(0,pixels[pi+2]-baseB);
+      const weight=Math.max(.05,1-(baseR+baseG+baseB)/(3*255));
+      rowSum+=(dr+dg+db)/3*weight;
+      const ii=y*stride+x;
+      integral[ii]=integral[ii-stride]+rowSum;
+    }
+  }
+  const rad=Math.max(2,diameter*scale/2),r=Math.ceil(rad),step=Math.max(2,Math.round(rad/2));
+  let score=-Infinity,bx=w/2,by=h/2;
+  for(let y=r;y<h-r;y+=step)for(let x=r;x<w-r;x+=step){
+    const x0=x-r,y0=y-r,x1=x+r+1,y1=y+r+1;
+    const area=(x1-x0)*(y1-y0);
+    const sum=integral[y1*stride+x1]-integral[y0*stride+x1]-integral[y1*stride+x0]+integral[y0*stride+x0];
+    const s=sum/area;
+    if(s>score){score=s;bx=x;by=y}
+  }
+  return{x:bx/scale,y:by/scale,score};
+}
 async function autoRoi(video,diameter){
-  if(!reprocessRunActive)throw new Error('Automatic ROI search can only be started with the “Run reprocessing” button.');
-  if(!videoFiles.length)throw new Error('Add and select a video before using automatic ROI.');
-  if(!video.videoWidth||!finite(video.duration)||video.duration<=0)throw new Error('The video is not ready for automatic ROI selection.');
-
-  const dur=video.duration;
+  if(!videoFiles.length)throw new Error('Add and select a video before automatic ROI selection.');
+  if(!video.videoWidth||!finite(video.duration)||video.duration<=0)throw new Error('The video is not ready.');
+  const dur=video.duration,selectedTime=clamp(video.currentTime||0,0,dur);
   video.pause();
-
-  $('reProgress').textContent='Automatic ROI: capturing video background...';
-
-  const baselineTimes=[0,Math.min(0.10,dur),Math.min(0.20,dur),Math.min(0.30,dur),Math.min(0.40,dur)];
-  const maxW=320,scale=Math.min(1,maxW/video.videoWidth);
+  $('reProgress').textContent='Automatic ROI: measuring background...';
+  const baseTimes=[0,Math.min(.1,dur),Math.min(.2,dur),Math.min(.3,dur),Math.min(.4,dur)];
+  const maxW=240,scale=Math.min(1,maxW/video.videoWidth);
   const w=Math.max(80,Math.round(video.videoWidth*scale));
   const h=Math.max(60,Math.round(video.videoHeight*scale));
-  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const c=$('autoWorkCanvas');c.width=w;c.height=h;
   const ctx=c.getContext('2d',{willReadFrequently:true});
   const acc=new Float32Array(w*h*3);
-
-  for(const t of baselineTimes){
+  for(const t of baseTimes){
     await seekVideo(video,t);
     ctx.drawImage(video,0,0,w,h);
     const d=ctx.getImageData(0,0,w,h).data;
-    for(let i=0,j=0;i<d.length;i+=4){
-      acc[j++]+=d[i];acc[j++]+=d[i+1];acc[j++]+=d[i+2];
-    }
+    for(let i=0,j=0;i<d.length;i+=4){acc[j++]+=d[i];acc[j++]+=d[i+1];acc[j++]+=d[i+2]}
   }
-  for(let i=0;i<acc.length;i++)acc[i]/=baselineTimes.length;
+  for(let i=0;i<acc.length;i++)acc[i]/=baseTimes.length;
   const baseline={w,h,scale,data:acc};
-
-  const requestedDt=Math.max(0.05,Number($('reFrameInterval').value)||0.10);
-  const scanDt=Math.max(requestedDt,dur/250);
-  let best={score:-Infinity,x:video.videoWidth/2,y:video.videoHeight/2,t:0};
-  let count=0,total=Math.max(1,Math.ceil(dur/scanDt)+1);
-
-  for(let t=0;t<=dur+1e-8;t+=scanDt){
-    await seekVideo(video,Math.min(t,dur));
-    const p=findDeltaRoiCandidate(video,diameter,baseline);
-    if(p&&p.score>best.score)best={...p,t:Math.min(t,dur)};
-    count++;
-    if(count%5===0||count===total){
-      $('reProgress').textContent=`Automatic ROI: analyzing video ${Math.min(100,Math.round(100*count/total))}%`;
-    }
+  // If user has selected a luminous frame, detect the ROI in that frame first.
+  await seekVideo(video,selectedTime);
+  let p=findReprocessAutoCandidate(video,diameter,baseline);
+  if(p&&p.score>=AUTO_ROI_MIN_DELTA&&selectedTime>.5)return{...p,t:selectedTime};
+  // Otherwise search the entire selected video (up to ~120 representative frames).
+  let best={score:-Infinity,x:video.videoWidth/2,y:video.videoHeight/2,t:selectedTime};
+  const frames=Math.max(2,Math.min(120,Math.ceil(dur/.25)));
+  for(let i=0;i<=frames;i++){
+    const t=Math.min(dur,(dur*i)/frames);
+    await seekVideo(video,t);
+    p=findReprocessAutoCandidate(video,diameter,baseline);
+    if(p&&p.score>best.score)best={...p,t};
+    if(i%4===0)$('reProgress').textContent=`Finding ROI: ${Math.round(100*i/frames)}%`;
   }
-
-  if(!finite(best.score)||best.score<AUTO_ROI_MIN_DELTA){
-    throw new Error('Insufficient increase in emission to position the ROI automatically.');
-  }
+  if(!finite(best.score)||best.score<AUTO_ROI_MIN_DELTA)throw new Error('No clear emission increase detected. Pause on a visible peak and try automatic ROI again, or select it manually.');
   return best;
 }
+
 function applyLiveAutoRoiCandidate(){
   if(!liveAutoRoiEnabled||liveRoi.locked||!$('liveVideo').videoWidth||!liveAutoBaseline)return false;
   const p=findDeltaRoiCandidate($('liveVideo'),roiDiameterFor('live'),liveAutoBaseline);
@@ -292,19 +341,42 @@ $('reRoiManual').onclick=()=>{
   drawRoi($('reVideo'),$('reOverlay'),reRoi);
   $('reProgress').textContent='Manual ROI selected.';
 };
-$('reRoiAuto').onclick=()=>{
+$('reRoiAuto').onclick=async()=>{
+  if(reprocessRunActive||rePreviewAutoSearching)return;
+  if(!videoFiles.length){$('reProgress').textContent='Add a video before automatic ROI selection.';return}
+  const v=$('reVideo');
+  if(!v.videoWidth){$('reProgress').textContent='Wait for the video to load.';return}
+  rePreviewAutoSearching=true;
   reAutoRoiEnabled=true;
   reAutoRoiLastResult=null;
   reRoi.locked=false;
+  $('reRoiAuto').disabled=true;
   $('reRoiAuto').classList.add('roiActive');
-  $('reRoiAuto').setAttribute('aria-pressed','true');
-  $('reRoiAuto').textContent='✓ Automatic mode ready';
-  $('reRoiLock').classList.remove('roiLocked');
-  $('reRoiLock').textContent='Lock ROI';
-  if(!reRoi.valid)centerRoi($('reVideo'),reRoi);
-  drawRoi($('reVideo'),$('reOverlay'),reRoi);
-  $('reProgress').textContent='Automatic mode ready. No search is running. Click “Run reprocessing” to start ROI detection and reprocessing.';
+  $('reRoiAuto').textContent='Finding ROI...';
+  updateReTransport();
+  try{
+    const best=await autoRoi(v,roiDiameterFor('re'));
+    reRoi.x=best.x;reRoi.y=best.y;reRoi.valid=true;
+    reRoi.locked=true;
+    reAutoRoiLastResult=best;
+    await seekVideo(v,best.t);
+    drawRoi(v,$('reOverlay'),reRoi);
+    $('reRoiLock').classList.add('roiLocked');
+    $('reRoiLock').textContent='🔒 ROI locked';
+    $('reRoiAuto').textContent='✓ ROI found (rescan)';
+    $('reProgress').textContent=`ROI selected and locked automatically at ${best.t.toFixed(3)} s (ΔRGB ${best.score.toFixed(1)}). Click Run reprocessing to analyze all videos. Click the automatic button again to rescan.`;
+  }catch(e){
+    reAutoRoiEnabled=false;
+    $('reRoiAuto').classList.remove('roiActive');
+    $('reRoiAuto').textContent='Select ROI automatically';
+    $('reProgress').textContent='Automatic ROI: '+e.message;
+  }finally{
+    rePreviewAutoSearching=false;
+    $('reRoiAuto').disabled=false;
+    updateReTransport();
+  }
 };
+
 $('reRoiLock').onclick=()=>{
   if(!reRoi.valid){alert('Set the ROI position first.');return}
   reRoi.locked=true;
@@ -337,54 +409,80 @@ async function startLiveAcquisition(){if(liveActive)return;if(!stream){await con
 async function stopLiveAcquisition(auto=false,createRecord=true){if(!liveActive)return;liveActive=false;if(liveTimer){clearInterval(liveTimer);liveTimer=null}const stoppedVideoBlob=await stopRecorder();if(liveAutoRoiEnabled&&!liveRoi.locked){if(liveAutoRoiFound){$('liveProgress').textContent='Run finished — region with the greatest RGB emission increase preserved. Check its position and click “Lock ROI”.';log(`Automatic ROI finished — best ΔRGB = ${liveAutoRoiBest.toFixed(2)}.`)}else{$('liveProgress').textContent='Run finished — insufficient increase in emission to reposition the ROI. Try another positioning run.';log('Automatic ROI: no emission increase above the threshold was detected.')}}else{$('liveProgress').textContent=auto?'Sequence finished automatically':'Acquisition stopped'}if(createRecord&&liveData.length){const channels=channelsFrom('liveChannels'),n=Math.max(1,Number($('liveReplicates').value)||5),gap=Math.max(0,Number($('livePeakGap').value)||5),peaks=detectPeaks(liveData,n,gap,channels,serialRepWindows);addRecord({name:$('runName').value||`Run ${recordId}`,source:'Aquisição',channels,interval:Number($('liveFrameInterval').value),gap,nRep:n,roi:{nx:liveRoi.x/($('liveVideo').videoWidth||1),ny:liveRoi.y/($('liveVideo').videoHeight||1),diameter:roiDiameterFor('live')},data:liveData.map(x=>({...x})),peaks,videoBlob:stoppedVideoBlob});incrementRunName()}}
 function incrementRunName(){const s=$('runName').value,m=s.match(/^(.*?)(\d+)$/);$('runName').value=m?m[1]+String(Number(m[2])+1).padStart(m[2].length,'0'):`Run ${String(recordId).padStart(3,'0')}`}$('startLive').onclick=startLiveAcquisition;$('stopLive').onclick=()=>stopLiveAcquisition(false,true);async function runWashCommand(command,label){if(liveActive){alert('Wait for the run to finish before starting washing.');return}if(!serialPort){alert('Connect Arduino Due before washing.');log(label+': Arduino not connected.');return}try{$('washMsg').textContent=label+' requested from Arduino...';await sendSerial(command);$('washMsg').textContent=label+' started. Follow the progress in the log.'}catch(e){$('washMsg').textContent='Failed to start '+label.toLowerCase()+'.';log('Error: '+e.message)}}$('washReagents').onclick=()=>runWashCommand('LAVA_REAGENTES','Reagent washing');$('washPath').onclick=()=>runWashCommand('LAVA_PERCURSO','Flow path washing');$('liveChannels').onchange=()=>drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));$('reChannels').onchange=()=>drawTemporal('reChart',reData,channelsFrom('reChannels'));$('liveRoiDiameter').oninput=()=>drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);$('reRoiDiameter').oninput=()=>drawRoi($('reVideo'),$('reOverlay'),reRoi);
 window.addEventListener('resize',()=>{drawRoi($('liveVideo'),$('liveOverlay'),liveRoi);drawRoi($('reVideo'),$('reOverlay'),reRoi);drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()});
-// The ROI canvas covers the video preview, so native video controls are not accessible.
-// Dedicated controls remain outside the overlay and allow frame selection before ROI locking.
+// Expand the video preview without moving the video/canvas out of its DOM position.
+function setRePreviewExpanded(expanded){
+  reExpanded=expanded;
+  $('rePreviewCard').classList.toggle('rePreviewExpanded',expanded);
+  $('rePreviewBackdrop').classList.toggle('active',expanded);
+  document.body.style.overflow=expanded?'hidden':'';
+  $('reExpandPreview').textContent=expanded?'↙ Close expanded preview':'⛶ Expand preview';
+  $('reExpandPreview').setAttribute('aria-expanded',String(expanded));
+  fitVideoWrap($('reVideo'));
+  requestAnimationFrame(()=>drawRoi($('reVideo'),$('reOverlay'),reRoi));
+}
+$('reExpandPreview').onclick=()=>setRePreviewExpanded(!reExpanded);
+$('rePreviewBackdrop').onclick=()=>setRePreviewExpanded(false);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&reExpanded)setRePreviewExpanded(false)});
 function updateReTransport(){
-  const v=$('reVideo'),duration=Number.isFinite(v.duration)&&v.duration>0?v.duration:0;
+  const v=$('reVideo'),duration=finite(v.duration)&&v.duration>0?v.duration:0;
   const hasVideo=selectedVideoIndex>=0&&duration>0;
-  const busy=reprocessRunActive;
-  for(const id of ['rePlayPause','reStepBack','reStepForward','reSeekBar'])$(id).disabled=!hasVideo||busy;
+  const busy=reprocessRunActive||rePreviewAutoSearching;
+  for(const id of ['rePlayPause','reStepBack','reStepForward','reSeekBar','reGoTimeBtn','reGoTime','rePreviewStep'])$(id).disabled=!hasVideo||busy;
   $('reSeekBar').max=duration||0;
   if(!reTimelineDragging)$('reSeekBar').value=hasVideo?clamp(v.currentTime||0,0,duration):0;
   const cur=hasVideo?clamp(v.currentTime||0,0,duration):0;
-  $('reTimeLabel').textContent=`${cur.toFixed(2)} / ${duration.toFixed(2)} s`;
+  $('reTimeLabel').textContent=`${cur.toFixed(3)} / ${duration.toFixed(3)} s`;
+  if(document.activeElement!==$('reGoTime'))$('reGoTime').value=cur.toFixed(3);
+  $('reGoTime').max=duration||0;
   $('rePlayPause').textContent=v.paused?'▶ Play':'⏸ Pause';
 }
 async function toggleRePlay(){
-  const v=$('reVideo');
-  if(reprocessRunActive||selectedVideoIndex<0)return;
-  if(!v.paused){v.pause();return}
-  if(Number.isFinite(v.duration)&&v.duration>0&&v.currentTime>=v.duration-0.05)v.currentTime=0;
+  const v=$('reVideo');if(reprocessRunActive||rePreviewAutoSearching||selectedVideoIndex<0)return;
+  if(!v.paused){v.pause();updateReTransport();return}
+  if(finite(v.duration)&&v.duration>0&&v.currentTime>=v.duration-.05)v.currentTime=0;
   try{await v.play()}catch(e){$('reProgress').textContent='Unable to play the video: '+e.message}
   updateReTransport();
 }
 $('rePlayPause').onclick=toggleRePlay;
-function reStep(direction){
+async function reSeekTo(target){
   const v=$('reVideo');
-  if(reprocessRunActive||selectedVideoIndex<0||!Number.isFinite(v.duration))return;
+  if(reprocessRunActive||rePreviewAutoSearching||selectedVideoIndex<0||!finite(v.duration))return;
   v.pause();
-  const interval=Math.max(.01,Number($('reFrameInterval').value)||.10);
-  v.currentTime=clamp((v.currentTime||0)+direction*interval,0,v.duration);
+  const t=clamp(target,0,v.duration);
+  const sequence=++reSeekSequence;
+  $('reTimeLabel').textContent=`${t.toFixed(3)} / ${v.duration.toFixed(3)} s`;
+  try{
+    await seekVideo(v,t);
+    if(sequence!==reSeekSequence)return;
+    drawRoi(v,$('reOverlay'),reRoi);
+  }catch(e){$('reProgress').textContent='Could not navigate to the selected frame: '+e.message}
   updateReTransport();
+}
+function reStep(direction){
+  const step=Number($('rePreviewStep').value)||1/30;
+  // Requested positions accumulate independently of any encoded frame timestamp rounding.
+  const cur=$('reVideo').currentTime||0;
+  return reSeekTo(Math.round((cur+direction*step)*10000)/10000);
 }
 $('reStepBack').onclick=()=>reStep(-1);
 $('reStepForward').onclick=()=>reStep(1);
+$('reGoTimeBtn').onclick=()=>reSeekTo(Number($('reGoTime').value)||0);
+$('reGoTime').addEventListener('keydown',e=>{if(e.key==='Enter')reSeekTo(Number(e.currentTarget.value)||0)});
 $('reSeekBar').addEventListener('pointerdown',()=>{reTimelineDragging=true});
 $('reSeekBar').addEventListener('pointerup',()=>{reTimelineDragging=false;updateReTransport()});
 $('reSeekBar').addEventListener('blur',()=>{reTimelineDragging=false;updateReTransport()});
 $('reSeekBar').oninput=e=>{
   const v=$('reVideo');
-  if(reprocessRunActive||selectedVideoIndex<0||!Number.isFinite(v.duration))return;
-  v.pause();
-  v.currentTime=clamp(Number(e.target.value)||0,0,v.duration);
-  $('reTimeLabel').textContent=`${v.currentTime.toFixed(2)} / ${v.duration.toFixed(2)} s`;
+  if(reprocessRunActive||rePreviewAutoSearching||selectedVideoIndex<0||!finite(v.duration))return;
+  v.pause();const t=clamp(Number(e.target.value)||0,0,v.duration);
+  v.currentTime=t;
+  $('reTimeLabel').textContent=`${t.toFixed(3)} / ${v.duration.toFixed(3)} s`;
+  $('reGoTime').value=t.toFixed(3);
 };
 for(const evt of ['loadedmetadata','loadeddata','timeupdate','seeking','seeked','play','pause','ended','durationchange']){
   $('reVideo').addEventListener(evt,updateReTransport);
 }
-// The canvas receives ROI pointer events; pause to select a stable luminous frame.
 $('reOverlay').addEventListener('pointerdown',()=>{if(!$('reVideo').paused)$('reVideo').pause()});
-$('reFrameInterval').addEventListener('change',updateReTransport);
 updateReTransport();
 $('videoFiles').onchange=e=>{const files=[...e.target.files];files.forEach(f=>{videoFiles.push(f);videoUrls.push(URL.createObjectURL(f))});renderVideoList();if(selectedVideoIndex<0&&videoFiles.length)selectVideo(0);e.target.value=''};
 function renderVideoList(){$('videoList').innerHTML=videoFiles.map((f,i)=>`<div class="videoItem ${i===selectedVideoIndex?'selected':''}"><button onclick="selectVideo(${i})">🎞 ${escapeHtml(f.name)}</button><button onclick="removeVideo(${i})">🗑</button></div>`).join('')}
@@ -434,6 +532,7 @@ async function seekVideo(v,t){if(Math.abs((v.currentTime||0)-t)<.002)return;cons
 async function processFile(index,roiRel,diameter,channels,dt,nRep,gap){const v=$('reVideo');v.src=videoUrls[index];await waitEvent(v,'loadedmetadata');const dur=v.duration;if(!finite(dur)||dur<=0)throw new Error('Invalid video duration');const roi={x:roiRel.nx*v.videoWidth,y:roiRel.ny*v.videoHeight,valid:true,locked:true},data=[],total=Math.floor(dur/dt)+1;for(let j=0,t=0;t<=dur+1e-8;j++,t=j*dt){$('reProgress').textContent=`Processing ${index+1}/${videoFiles.length}: ${Math.min(100,Math.round(100*j/total))}%`;await seekVideo(v,Math.min(t,dur));const s=meanRoi(v,roi,diameter,channels);if(s){s.t=Math.min(t,dur);data.push(s)}}const peaks=detectPeaks(data,nRep,gap,channels);return{data,peaks,roi}}
 $('executeReprocess').onclick=async()=>{
   if(!videoFiles.length){alert('Add one or more videos.');return}
+  if(rePreviewAutoSearching){alert('Wait until automatic ROI detection has finished.');return}
   const v=$('reVideo');
   if(!v.videoWidth)await selectVideo(Math.max(0,selectedVideoIndex));
   if(!reRoi.valid)centerRoi(v,reRoi);
