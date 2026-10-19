@@ -79,6 +79,42 @@ button,input,select{font:inherit}button{cursor:pointer}
 .roiCoordinates .roiPresetButtons{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
 .roiCoordinates .roiPresetButtons .btn{font-size:12px;padding:8px 9px;flex:1;min-width:135px}
 .roiCoordinates .note{margin-top:6px;overflow-wrap:anywhere}
+
+/* Results: let wide tables scroll inside their cards instead of squeezing the chart. */
+.gridResults{grid-template-columns:minmax(0,1.10fr) minmax(0,1.28fr) minmax(0,1.08fr);align-items:start;gap:14px}
+.gridResults>.card{min-width:0}
+.gridResults .tableWrap,.gridResults .repTableWrap{max-width:100%;min-width:0;overflow-x:auto}
+#recordsTable{min-width:410px}
+.gridResults .repTable{min-width:345px}
+.gridResults .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gridResults .metric{min-width:0;padding:11px 12px}
+.gridResults .metric .k{line-height:1.4}
+.gridResults .metric .v{font-variant-numeric:tabular-nums;line-height:1.2;overflow-wrap:anywhere;font-size:21px}
+.gridResults .metric .metricUnit{display:block;margin-top:5px;color:var(--muted);font-size:12px;font-weight:500;line-height:1.4;overflow-wrap:anywhere}
+.gridResults .calMetrics .metric .v{font-size:17px}
+.gridResults .calMetrics .metric.calEquation{grid-column:1/-1;background:#f8fbff}
+.gridResults .calMetrics .metric.calEquation .v{font-size:15px}
+.calChartLarge{height:390px}
+.calLegend{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:8px 0 4px;color:#475467;font-size:12px}
+.calLegend .legendItem{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.calLegend .legendLine{width:23px;height:0;border-top:2px solid var(--legend-color,#16a34a)}
+.calLegend .legendPoint{width:10px;height:10px;border:2px solid var(--legend-color,#16a34a);background:var(--legend-color,#16a34a);border-radius:50%}
+.calLegend .legendSample{width:11px;height:11px;border:2px solid #334155;background:white;border-radius:50%}
+.chartViewTools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:4px 0 10px}
+.chartViewTools label{font-size:12px;color:var(--muted)}
+.chartViewTools select{width:auto;font-size:12px;padding:6px 8px}
+.gridResults .resultHeader{align-items:center;gap:10px}
+.gridResults .resultHeader h2{margin-bottom:0}
+@media(max-width:1140px){
+  .gridResults{grid-template-columns:minmax(0,.92fr) minmax(0,1.1fr)}
+  .gridResults>.card:last-child{grid-column:1/-1}
+  .gridResults #sampleMetrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .gridResults{grid-template-columns:minmax(0,1fr)}
+  .gridResults>.card:last-child{grid-column:auto}
+  .gridResults #sampleMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -132,14 +168,16 @@ button,input,select{font:inherit}button{cursor:pointer}
       <div class="card"><h2>Records</h2><div class="field"><input id="recordSearch" placeholder="Search records..."></div><div class="tableWrap"><table id="recordsTable"><thead><tr><th><input id="selectAllRecords" type="checkbox"></th><th>Record name</th><th>Classification</th><th>Date/Time</th><th></th></tr></thead><tbody></tbody></table></div></div>
       <div class="card">
         <div class="resultHeader"><h2>Calibration curve</h2><div id="resultChannelTabs" class="channelTabs"><button data-ch="r">R</button><button data-ch="g" class="active">G</button><button data-ch="b">B</button></div></div>
-        <div id="calHint" class="calHint">The curve updates automatically when valid standards are saved for the selected channel. Smartphone RGB signals are expressed in counts (0–255).</div>
+        <div class="chartViewTools"><label for="calYAxisScale">Signal axis</label><select id="calYAxisScale" aria-label="Calibration signal axis scale"><option value="auto">Fit to data</option><option value="full">Full RGB range (0–255)</option></select></div>
+        <div id="calHint" class="calHint">The curve updates when standards are saved. RGB intensities are measured in counts (0–255).</div>
         <canvas id="calChart" class="chart calChartLarge"></canvas>
+        <div id="calLegend" class="calLegend" aria-label="Calibration graph legend"><span class="legendItem"><span class="legendPoint"></span> Calibration points</span><span class="legendItem"><span class="legendLine"></span> Linear fit</span><span class="legendItem" id="calSampleLegend" style="display:none"><span class="legendSample"></span> Sample</span></div>
         <div id="calMetrics" class="metrics calMetrics" style="margin-top:10px"></div>
         <div class="sectionDivider"></div>
         <h2>Time profile of the selected record</h2>
         <canvas id="resultChart" class="chart smallChart"></canvas>
       </div>
-      <div class="card"><h2>Analytical results</h2><div id="selectedRecordInfo" class="note" style="margin-bottom:10px">No record selected.</div><div id="sampleMetrics" class="metrics"></div><div id="replicatePanel"><div class="sectionDivider"></div><div class="repHeading"><h3>Individual replicates</h3><span id="replicateCount" class="pill">0 / 0 included</span></div><div class="repHint">All detected replicates are included by default. Uncheck a failed injection to exclude it from calculations without deleting its original signal.</div><div class="repTableWrap"><table class="repTable"><thead><tr><th>Use</th><th>Rep.</th><th>Peak time (s)</th><th id="repPeakHeader">Peak G (counts)</th><th id="repConcentrationHeader">Concentration</th></tr></thead><tbody id="replicateRows"></tbody></table></div><div id="replicateNote" class="repHint"></div></div><div id="standardPanel" class="stdPanel hidden"><h3>Selected standard data</h3><div class="field"><label>Known concentration</label><input id="standardConcentration" type="number" step="any"></div><div class="field"><label>Unit</label><input id="standardUnit" placeholder="e.g., µmol L⁻¹"></div><button id="saveStandard" class="btn">💾 Save</button><div id="standardMsg" class="note" style="margin-top:8px"></div></div><div id="resultMsg" class="note" style="margin-top:10px"></div></div>
+      <div class="card"><h2>Analytical results</h2><div id="selectedRecordInfo" class="note" style="margin-bottom:10px">No record selected.</div><div id="sampleMetrics" class="metrics"></div><div id="replicatePanel"><div class="sectionDivider"></div><div class="repHeading"><h3>Individual replicates</h3><span id="replicateCount" class="pill">0 / 0 included</span></div><div class="repHint">Each row is one injection in this run. All valid peaks are included by default. Uncheck a failed injection to exclude it from the signal mean, SD, CV and the single calculated concentration for this run. Original values are preserved.</div><div class="repTableWrap"><table class="repTable"><thead><tr><th>Use</th><th>Rep.</th><th>Peak time (s)</th><th id="repPeakHeader">Peak G (counts)</th></tr></thead><tbody id="replicateRows"></tbody></table></div><div id="replicateNote" class="repHint"></div></div><div id="standardPanel" class="stdPanel hidden"><h3>Selected standard data</h3><div class="field"><label>Known concentration</label><input id="standardConcentration" type="number" step="any"></div><div class="field"><label>Unit</label><input id="standardUnit" placeholder="e.g., µmol L⁻¹"></div><button id="saveStandard" class="btn">💾 Save</button><div id="standardMsg" class="note" style="margin-top:8px"></div></div><div id="resultMsg" class="note" style="margin-top:10px"></div></div>
     </div>
   </section>
   <div class="footer">CL RGB Analyzer — test version</div>
@@ -846,9 +884,97 @@ function selectedRecord(){return records.find(r=>r.id===selectedRecordId)||recor
 function renderRecords(){const q=$('recordSearch').value.trim().toLowerCase(),tb=$('recordsTable').querySelector('tbody');tb.innerHTML='';records.filter(r=>!q||r.name.toLowerCase().includes(q)).forEach(r=>{const tr=document.createElement('tr');tr.className='recordRow'+(r.id===selectedRecordId?' selected':'');tr.onclick=e=>{if(e.target.closest('select,button,input'))return;selectedRecordId=r.id;renderRecords();renderResults()};const dt=r.createdAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});tr.innerHTML=`<td><input type="checkbox" class="exportPick" data-id="${r.id}" ${exportSelected.has(r.id)?'checked':''}></td><td>${escapeHtml(r.name)}</td><td><select class="classSel" data-id="${r.id}"><option value="none">Unclassified</option><option value="standard">Standard</option><option value="sample">Sample</option></select></td><td>${dt}</td><td><button class="trash" data-id="${r.id}">🗑</button></td>`;tb.appendChild(tr);tr.querySelector('select').value=r.classification});tb.querySelectorAll('.exportPick').forEach(c=>c.onchange=e=>{const id=Number(e.target.dataset.id);if(e.target.checked)exportSelected.add(id);else exportSelected.delete(id)});tb.querySelectorAll('.classSel').forEach(s=>s.onchange=e=>{const r=records.find(x=>x.id===Number(e.target.dataset.id));if(!r)return;r.classification=e.target.value;if(r.classification!=='standard')r.calibrationSaved=false;selectedRecordId=r.id;renderRecords();renderResults()});tb.querySelectorAll('.trash').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=Number(e.currentTarget.dataset.id),r=records.find(x=>x.id===id);if(r&&confirm(`Permanently delete "${r.name}"?`)){records=records.filter(x=>x.id!==id);exportSelected.delete(id);if(selectedRecordId===id)selectedRecordId=records[0]?.id||null;renderRecords();renderResults()}})}
 $('recordSearch').oninput=renderRecords;$('selectAllRecords').onchange=e=>document.querySelectorAll('.exportPick').forEach(x=>{x.checked=e.target.checked;const id=Number(x.dataset.id);if(x.checked)exportSelected.add(id);else exportSelected.delete(id)});
 function regression(ch){const std=records.filter(r=>r.classification==='standard'&&r.calibrationSaved&&finite(r.concentration)&&peakSignals(r,ch).length);if(std.length<2)return{ok:false,msg:'At least two valid standards are required.'};const units=[...new Set(std.map(r=>r.unit.trim()))];if(units.length!==1||!units[0])return{ok:false,msg:'All standards must use the same unit.'};const pts=std.map(r=>{const s=stat(peakSignals(r,ch));return{x:r.concentration,y:s.mean,sd:s.sd,n:s.n,id:r.id,name:r.name}}).sort((a,b)=>a.x-b.x);if(new Set(pts.map(p=>p.x)).size<2)return{ok:false,msg:'At least two different concentrations are required.'};const n=pts.length,xm=pts.reduce((s,p)=>s+p.x,0)/n,ym=pts.reduce((s,p)=>s+p.y,0)/n,sxx=pts.reduce((s,p)=>s+(p.x-xm)**2,0),sxy=pts.reduce((s,p)=>s+(p.x-xm)*(p.y-ym),0),slope=sxy/sxx,intercept=ym-slope*xm,res=pts.map(p=>p.y-(intercept+slope*p.x)),sse=res.reduce((s,e)=>s+e*e,0),sst=pts.reduce((s,p)=>s+(p.y-ym)**2,0),r2=sst?1-sse/sst:NaN,syx=n>2?Math.sqrt(sse/(n-2)):NaN,lod=finite(syx)&&slope?3.3*syx/Math.abs(slope):NaN,loq=finite(syx)&&slope?10*syx/Math.abs(slope):NaN;return{ok:true,channel:ch,pts,slope,intercept,r2,syx,lod,loq,unit:units[0],n,rangeMin:Math.min(...pts.map(p=>p.x)),rangeMax:Math.max(...pts.map(p=>p.x))}}
-function resultForSample(rec,ch){const reg=regression(ch),signals=peakSignals(rec,ch);if(!reg.ok||!signals.length||!reg.slope)return{ok:false,reg};const sig=stat(signals),concs=signals.map(y=>(y-reg.intercept)/reg.slope),cs=stat(concs);return{ok:true,reg,sig,cs,concs}}
+function resultForSample(rec,ch){const reg=regression(ch),signals=peakSignals(rec,ch);if(!reg.ok||!signals.length||!finite(reg.slope)||reg.slope===0)return{ok:false,reg};const sig=stat(signals);return{ok:true,reg,sig,concentration:(sig.mean-reg.intercept)/reg.slope}}
 function niceMax(v){if(!finite(v)||v<=0)return 1;const p=10**Math.floor(Math.log10(v)),n=v/p;return(n<=1?1:n<=2?2:n<=5?5:10)*p}
-function drawCalibration(reg,rec){const c=$('calChart'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.max(320,Math.round(rect.width||650)),h=Math.max(280,Math.round(rect.height||360));c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.fillStyle='#fff';x.fillRect(0,0,w,h);const m={l:62,r:22,t:36,b:52},plotW=w-m.l-m.r,plotH=h-m.t-m.b;x.font='12px Arial';x.fillStyle='#475467';x.fillText('Signal (counts)',8,20);x.fillText(reg.ok?`Concentration (${reg.unit})`:'Concentration',Math.max(m.l,w-150),h-12);for(let v=0;v<=255;v+=51){const py=h-m.b-v/255*plotH;x.strokeStyle='#edf1f6';x.beginPath();x.moveTo(m.l,py);x.lineTo(w-m.r,py);x.stroke();x.fillStyle='#667085';x.fillText(String(v),m.l-38,py+4)}x.strokeStyle='#cdd5df';x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();if(!reg.ok){x.fillStyle='#98a2b3';x.fillText('Calibration curve unavailable',m.l+18,m.t+28);return}const xmax=niceMax(Math.max(reg.rangeMax,1)*1.08),xmin=0,X=v=>m.l+(v-xmin)/(xmax-xmin||1)*plotW,Y=v=>h-m.b-clamp(v,0,255)/255*plotH;const ticks=5;for(let i=0;i<=ticks;i++){const val=xmin+(xmax-xmin)*i/ticks,px=X(val);x.strokeStyle='#edf1f6';x.beginPath();x.moveTo(px,m.t);x.lineTo(px,h-m.b);x.stroke();x.fillStyle='#667085';x.fillText(Number(val.toPrecision(3)).toString(),px-8,h-m.b+18)}const col={r:'#dc2626',g:'#16a34a',b:'#2563eb'}[reg.channel];x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(X(xmin),Y(reg.intercept+reg.slope*xmin));x.lineTo(X(xmax),Y(reg.intercept+reg.slope*xmax));x.stroke();reg.pts.forEach(p=>{const px=X(p.x),py=Y(p.y);if(finite(p.sd)&&p.sd>0){x.strokeStyle='#344054';x.lineWidth=1;x.beginPath();x.moveTo(px,Y(p.y-p.sd));x.lineTo(px,Y(p.y+p.sd));x.moveTo(px-4,Y(p.y-p.sd));x.lineTo(px+4,Y(p.y-p.sd));x.moveTo(px-4,Y(p.y+p.sd));x.lineTo(px+4,Y(p.y+p.sd));x.stroke()}x.fillStyle=col;x.beginPath();x.arc(px,py,5,0,Math.PI*2);x.fill();x.strokeStyle='#fff';x.lineWidth=1;x.stroke()});if(rec&&rec.classification==='sample'){const rr=resultForSample(rec,reg.channel);if(rr.ok&&finite(rr.cs.mean)&&finite(rr.sig.mean)){const sx=rr.cs.mean,sy=rr.sig.mean;if(sx>=xmin&&sx<=xmax&&sy>=0&&sy<=255){const px=X(sx),py=Y(sy);x.setLineDash([5,4]);x.strokeStyle='#111827';x.lineWidth=1;x.beginPath();x.moveTo(m.l,py);x.lineTo(px,py);x.lineTo(px,h-m.b);x.stroke();x.setLineDash([]);x.fillStyle='#fff';x.strokeStyle='#111827';x.lineWidth=2;x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.fill();x.stroke();x.fillStyle='#111827';x.fillText('Sample',Math.min(px+8,w-m.r-55),Math.max(m.t+14,py-8))}}}const calLegendStart=Math.max(m.l+80,w-255);x.fillStyle=col;x.fillRect(calLegendStart,12,18,3);x.fillStyle='#344054';x.fillText('Calibration points',calLegendStart+24,17);x.strokeStyle=col;x.beginPath();x.moveTo(calLegendStart+150,14);x.lineTo(calLegendStart+172,14);x.stroke();x.fillStyle='#344054';x.fillText('Linear fit',calLegendStart+178,17)}
+function chartNiceStep(target){
+  if(!finite(target)||target<=0)return 1;
+  const power=10**Math.floor(Math.log10(target)),scaled=target/power;
+  return(scaled<=1?1:scaled<=2?2:scaled<=2.5?2.5:scaled<=5?5:10)*power;
+}
+function drawCalibration(reg,rec){
+  const c=$('calChart'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  const w=Math.max(260,Math.round(rect.width||550)),h=Math.max(300,Math.round(rect.height||390));
+  c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const x=c.getContext('2d');x.scale(dpr,dpr);
+  x.fillStyle='#fff';x.fillRect(0,0,w,h);
+  const m={l:61,r:19,t:33,b:58},plotW=w-m.l-m.r,plotH=h-m.t-m.b;
+  x.font='12px Arial';x.fillStyle='#475467';x.textAlign='left';x.fillText('Signal (counts)',9,19);
+  const title=reg.ok?`Concentration (${reg.unit})`:'Concentration';
+  x.textAlign='center';x.fillText(title,m.l+plotW/2,h-13);x.textAlign='left';
+  const col={r:'#dc2626',g:'#16a34a',b:'#2563eb'}[reg.channel]||'#16a34a';
+  $('calLegend').style.setProperty('--legend-color',col);
+  $('calSampleLegend').style.display=reg.ok&&rec?.classification==='sample'?'inline-flex':'none';
+  if(!reg.ok){
+    x.strokeStyle='#d4dce8';x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();
+    x.fillStyle='#98a2b3';x.fillText('Calibration curve unavailable',m.l+12,m.t+25);return;
+  }
+  const xstep=chartNiceStep(Math.max(reg.rangeMax,1)/5),xmin=0;
+  const xmax=Math.max(xstep,Math.ceil(Math.max(reg.rangeMax,1)*1.04/xstep)*xstep);
+  let minY=Infinity,maxY=-Infinity;
+  const fitLo=reg.intercept+reg.slope*xmin,fitHi=reg.intercept+reg.slope*xmax;
+  for(const v of [fitLo,fitHi]){minY=Math.min(minY,v);maxY=Math.max(maxY,v)}
+  for(const p of reg.pts){const sd=finite(p.sd)?p.sd:0;minY=Math.min(minY,p.y-sd);maxY=Math.max(maxY,p.y+sd)}
+  let sample=null;
+  if(rec?.classification==='sample'){
+    const rr=resultForSample(rec,reg.channel);
+    if(rr.ok&&finite(rr.concentration)&&finite(rr.sig.mean)){
+      sample={x:rr.concentration,y:rr.sig.mean};
+      if(sample.x>=xmin&&sample.x<=xmax){minY=Math.min(minY,sample.y);maxY=Math.max(maxY,sample.y)}
+    }
+  }
+  const autoScale=$('calYAxisScale').value!=='full';
+  let ymin=0,ymax=255,ystep=51;
+  if(autoScale&&finite(minY)&&finite(maxY)){
+    const span=Math.max(2,maxY-minY),padding=Math.max(1.5,span*.12);
+    ystep=chartNiceStep((span+2*padding)/5);
+    ymin=Math.max(0,Math.floor((minY-padding)/ystep)*ystep);
+    ymax=Math.min(255,Math.ceil((maxY+padding)/ystep)*ystep);
+    if(ymax-ymin<ystep){ymax=Math.min(255,ymin+ystep)}
+  }
+  const X=v=>m.l+(v-xmin)/(xmax-xmin||1)*plotW;
+  const Y=v=>h-m.b-(v-ymin)/(ymax-ymin||1)*plotH;
+  // Draw ticks without changing any regression or sample calculations.
+  x.strokeStyle='#ecf0f7';x.lineWidth=1;
+  const yTickCount=autoScale?Math.max(1,Math.round((ymax-ymin)/ystep)):5;
+  for(let i=0;i<=yTickCount;i++){
+    const val=autoScale?ymin+i*ystep:i*51;
+    if(val>ymax+1e-8)continue;
+    const py=Y(val);x.beginPath();x.moveTo(m.l,py);x.lineTo(w-m.r,py);x.stroke();
+    x.fillStyle='#667085';x.textAlign='right';x.fillText(Number(val.toFixed(3)).toString(),m.l-9,py+4);
+  }
+  const nTicks=Math.max(1,Math.round(xmax/xstep));
+  for(let i=0;i<=nTicks;i++){
+    const val=i*xstep,px=X(val);
+    x.strokeStyle='#ecf0f7';x.beginPath();x.moveTo(px,m.t);x.lineTo(px,h-m.b);x.stroke();
+    x.fillStyle='#667085';x.textAlign='center';x.fillText(Number(val.toPrecision(5)).toString(),px,h-m.b+19);
+  }
+  x.textAlign='left';x.strokeStyle='#cdd5df';x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,h-m.b);x.lineTo(w-m.r,h-m.b);x.stroke();
+  // Clip the plotted data to the axes, not the labels.
+  x.save();x.beginPath();x.rect(m.l,m.t,plotW,plotH);x.clip();
+  x.strokeStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(X(xmin),Y(fitLo));x.lineTo(X(xmax),Y(fitHi));x.stroke();
+  reg.pts.forEach(p=>{
+    const px=X(p.x),py=Y(p.y);
+    if(finite(p.sd)&&p.sd>0){
+      x.strokeStyle='#344054';x.lineWidth=1;x.beginPath();
+      x.moveTo(px,Y(p.y-p.sd));x.lineTo(px,Y(p.y+p.sd));
+      x.moveTo(px-4,Y(p.y-p.sd));x.lineTo(px+4,Y(p.y-p.sd));
+      x.moveTo(px-4,Y(p.y+p.sd));x.lineTo(px+4,Y(p.y+p.sd));x.stroke();
+    }
+    x.fillStyle=col;x.strokeStyle='#fff';x.lineWidth=1;x.beginPath();x.arc(px,py,5,0,Math.PI*2);x.fill();x.stroke();
+  });
+  if(sample&&sample.x>=xmin&&sample.x<=xmax&&sample.y>=ymin&&sample.y<=ymax){
+    const px=X(sample.x),py=Y(sample.y);
+    x.setLineDash([5,4]);x.strokeStyle='#111827';x.lineWidth=1;x.beginPath();
+    x.moveTo(m.l,py);x.lineTo(px,py);x.lineTo(px,h-m.b);x.stroke();x.setLineDash([]);
+    x.fillStyle='#fff';x.strokeStyle='#111827';x.lineWidth=2;x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.fill();x.stroke();
+  }
+  x.restore();
+  if(sample&&sample.x>=xmin&&sample.x<=xmax&&sample.y>=ymin&&sample.y<=ymax){
+    x.fillStyle='#111827';x.textAlign='left';
+    const px=X(sample.x),py=Y(sample.y);
+    x.fillText('Sample',Math.min(px+8,w-m.r-47),Math.max(m.t+13,py-9));
+  }
+}
 function renderReplicates(rec){
   const peaks=rec.peaks||[];
   $('replicatePanel').classList.toggle('hidden',!peaks.length);
@@ -856,15 +982,11 @@ function renderReplicates(rec){
   const included=peaks.filter(p=>isRepIncluded(rec,p)).length;
   $('replicateCount').textContent=`${included} / ${peaks.length} included`;
   $('repPeakHeader').textContent=`Peak ${resultChannel.toUpperCase()} (counts)`;
-  const reg=rec.classification==='sample'?regression(resultChannel):{ok:false};
-  $('repConcentrationHeader').textContent=rec.classification==='sample'&&reg.ok?`Concentration (${reg.unit})`:'Concentration';
   $('replicateRows').innerHTML=peaks.map(p=>{
-    const hasSignal=finite(p[resultChannel]),selected=isRepIncluded(rec,p),v=p[resultChannel];
-    const t=p['t'+resultChannel];
-    const conc=hasSignal&&reg.ok&&reg.slope?(v-reg.intercept)/reg.slope:NaN;
-    return `<tr class="${selected?'':'excluded'}"><td><input type="checkbox" class="repToggle" data-rep="${p.rep}" ${selected?'checked':''} aria-label="Include replicate ${p.rep}"></td><td>${p.rep}</td><td>${fmt(t,2)}</td><td>${fmt(v,3)}</td><td>${finite(conc)?fmt(conc,3):'—'}</td></tr>`;
+    const selected=isRepIncluded(rec,p),v=p[resultChannel],t=p['t'+resultChannel];
+    return `<tr class="${selected?'':'excluded'}"><td><input type="checkbox" class="repToggle" data-rep="${p.rep}" ${selected?'checked':''} aria-label="Include injection ${p.rep}"></td><td>${p.rep}</td><td>${fmt(t,2)}</td><td>${fmt(v,3)}</td></tr>`;
   }).join('');
-  $('replicateNote').textContent=`${peaks.length} peaks detected (requested: ${rec.nRep}). Changes update sample statistics and any calibration based on this standard. Original peaks remain available for export.${included===1?' With one replicate, SD and CV cannot be estimated.':''}${included===0?' No replicates are included in calculations.':''}`;
+  $('replicateNote').textContent=`${peaks.length} peaks detected (requested: ${rec.nRep}). The mean RGB signal represents this run; excluding a peak also updates the calibration when this run is a standard. Original peaks remain available for export.${included===1?' With one included peak, SD and CV cannot be estimated.':''}${included===0?' No peaks are included in calculations.':''}`;
   $('replicateRows').querySelectorAll('.repToggle').forEach(el=>el.onchange=()=>{
     const rep=Number(el.dataset.rep),excluded=new Set(rec.excludedReplicates||[]);
     if(el.checked)excluded.delete(rep);else excluded.add(rep);
@@ -872,7 +994,65 @@ function renderReplicates(rec){
     renderResults();
   });
 }
-function renderResults(){if(!$('view-results').classList.contains('active'))return;renderRecords();const rec=selectedRecord();if(!rec){drawTemporal('resultChart',[],[]);drawCalibration({ok:false});$('sampleMetrics').innerHTML='';$('replicatePanel').classList.add('hidden');$('calMetrics').innerHTML='';$('selectedRecordInfo').textContent='No record selected.';$('standardPanel').classList.add('hidden');return}$('selectedRecordInfo').textContent=`${rec.name} — ${rec.source==='Aquisição'?'Acquisition':rec.source==='Reprocessamento'?'Reprocessing':rec.source} — ${rec.classification==='standard'?'Standard':rec.classification==='sample'?'Sample':'Unclassified'}`;document.querySelectorAll('#resultChannelTabs button').forEach(b=>b.classList.toggle('active',b.dataset.ch===resultChannel));const reg=regression(resultChannel);drawCalibration(reg,rec);drawTemporal('resultChart',rec.data,[resultChannel]);$('calMetrics').innerHTML=reg.ok?[['Equation',`y = ${fmt(reg.slope,6)}x ${reg.intercept>=0?'+':'−'} ${fmt(Math.abs(reg.intercept),6)}`],['R²',fmt(reg.r2,6)],['Range',`${fmt(reg.rangeMin,3)}–${fmt(reg.rangeMax,3)} ${reg.unit}`],['Standards',String(reg.n)],['Sy/x',fmt(reg.syx,6)],['LD',finite(reg.lod)?`${fmt(reg.lod,3)} ${reg.unit}`:'—'],['LQ',finite(reg.loq)?`${fmt(reg.loq,3)} ${reg.unit}`:'—'],['Channel',resultChannel.toUpperCase()]].map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v" style="font-size:${k==='Equation'||k==='Range'?'13px':'17px'}">${v}</div></div>`).join(''):`<div class="note">${escapeHtml(reg.msg||'Calibration curve unavailable.')}</div>`;$('standardPanel').classList.toggle('hidden',rec.classification!=='standard');if(rec.classification==='standard'){$('standardConcentration').value=finite(rec.concentration)?rec.concentration:'';$('standardUnit').value=rec.unit||'';$('standardMsg').textContent=rec.calibrationSaved?'Standard saved and included in the calibration curve.':'Enter concentration and unit, then save to include in the curve.'}if(rec.classification==='sample'){const rr=resultForSample(rec,resultChannel);$('sampleMetrics').innerHTML=rr.ok?[['Mean signal',`${fmt(rr.sig.mean,3)} counts`],['Mean concentration',`${fmt(rr.cs.mean,6)} ${rr.reg.unit}`],['Standard deviation (SD)',`${fmt(rr.cs.sd,6)} ${rr.reg.unit}`],['CV',`${fmt(rr.cs.cv,2)} %`]].map(([k,v])=>`<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(''):`<div class="note">${escapeHtml(rr.reg?.msg||'No valid calibration is available for this channel.')}</div>`;$('resultMsg').textContent=rr.ok?'Result calculated for each replicate and summarized using the mean, SD, and CV.':''}else if(rec.classification==='standard'){const s=stat(peakSignals(rec,resultChannel));$('sampleMetrics').innerHTML=`<div class="metric"><div class="k">Mean standard signal</div><div class="v">${fmt(s.mean,3)} counts</div></div>`;$('resultMsg').textContent=''}else{$('sampleMetrics').innerHTML='<div class="note">Classify this record as Standard or Sample to use it analytically.</div>';$('resultMsg').textContent=''}renderReplicates(rec)}
+function resultMetric(label,value,unit="",extraClass=""){return `<div class="metric${extraClass?" "+extraClass:""}"><div class="k">${escapeHtml(label)}</div><div class="v">${escapeHtml(value)}</div>${unit?`<div class="metricUnit">${escapeHtml(unit)}</div>`:""}</div>`}
+function renderResults(){
+  if(!$('view-results').classList.contains('active'))return;
+  renderRecords();
+  const rec=selectedRecord();
+  if(!rec){
+    drawTemporal('resultChart',[],[]);
+    drawCalibration({ok:false});
+    $('sampleMetrics').innerHTML='';
+    $('replicatePanel').classList.add('hidden');
+    $('calMetrics').innerHTML='';
+    $('selectedRecordInfo').textContent='No record selected.';
+    $('standardPanel').classList.add('hidden');
+    return;
+  }
+  $('selectedRecordInfo').textContent=`${rec.name} — ${rec.source==='Aquisição'?'Acquisition':rec.source==='Reprocessamento'?'Reprocessing':rec.source} — ${rec.classification==='standard'?'Standard':rec.classification==='sample'?'Sample':'Unclassified'}`;
+  document.querySelectorAll('#resultChannelTabs button').forEach(b=>b.classList.toggle('active',b.dataset.ch===resultChannel));
+  const reg=regression(resultChannel);
+  drawCalibration(reg,rec);
+  drawTemporal('resultChart',rec.data,[resultChannel]);
+  $('calMetrics').innerHTML=reg.ok?[
+    ['Equation',`y = ${fmt(reg.slope,6)}x ${reg.intercept>=0?'+':'−'} ${fmt(Math.abs(reg.intercept),6)}`,'','calEquation'],
+    ['R²',fmt(reg.r2,6)],
+    ['Range',`${fmt(reg.rangeMin,3)}–${fmt(reg.rangeMax,3)}`,reg.unit],
+    ['Standards',String(reg.n)],
+    ['Sᵧ/ₓ',fmt(reg.syx,6),'counts'],
+    ['LD',finite(reg.lod)?fmt(reg.lod,3):'—',finite(reg.lod)?reg.unit:''],
+    ['LQ',finite(reg.loq)?fmt(reg.loq,3):'—',finite(reg.loq)?reg.unit:''],
+    ['Channel',resultChannel.toUpperCase()]
+  ].map(([k,v,u,cls])=>resultMetric(k,v,u,cls)).join(''):`<div class="note">${escapeHtml(reg.msg||'Calibration curve unavailable.')}</div>`;
+  $('standardPanel').classList.toggle('hidden',rec.classification!=='standard');
+  if(rec.classification==='standard'){
+    $('standardConcentration').value=finite(rec.concentration)?rec.concentration:'';
+    $('standardUnit').value=rec.unit||'';
+    $('standardMsg').textContent=rec.calibrationSaved?'Standard saved and included in the calibration curve.':'Enter concentration and unit, then save to include in the curve.';
+  }
+  // A run contains repeated injections; these are signal replicates, not independent concentration determinations.
+  const sig=stat(peakSignals(rec,resultChannel));
+  const metrics=[
+    ['Mean RGB signal',fmt(sig.mean,3),'counts'],
+    ['Signal SD',fmt(sig.sd,3),'counts'],
+    ['Signal CV',fmt(sig.cv,2),'%']
+  ];
+  let extra='';
+  if(rec.classification==='sample'){
+    const rr=resultForSample(rec,resultChannel);
+    metrics.push(['Calculated concentration',rr.ok?fmt(rr.concentration,3):'—',rr.ok?rr.reg.unit:'']);
+    if(!rr.ok)extra=rr.reg?.msg||'Save valid standards to calculate the sample concentration.';
+  }else if(rec.classification==='standard'&&rec.calibrationSaved){
+    metrics.push(['Known concentration',fmt(rec.concentration,3),rec.unit]);
+  }else if(rec.classification==='none'){
+    extra='Classify this record as Standard or Sample to use it analytically.';
+  }
+  $('sampleMetrics').innerHTML=metrics.map(([name,value,unit])=>resultMetric(name,value,unit)).join('');
+  const scope=sig.n===0?'No valid peaks selected.':`${sig.n} included peak${sig.n===1?'':'s'} in this run.`;
+  $('resultMsg').textContent=`${scope} The SD and CV characterize within-run repeatability of RGB peak counts. The concentration is one result calculated from the average of the included peaks. Assess between-run concentration precision using independent runs.${extra?' '+extra:''}`;
+  renderReplicates(rec);
+}
+$('calYAxisScale').onchange=renderResults;
 document.querySelectorAll('#resultChannelTabs button').forEach(b=>b.onclick=()=>{resultChannel=b.dataset.ch;renderResults()});
 $('saveStandard').onclick=()=>{const r=selectedRecord();if(!r||r.classification!=='standard')return;const c=Number($('standardConcentration').value),u=$('standardUnit').value.trim();if(!finite(c)||!u){$('standardMsg').textContent='Enter a valid concentration and unit.';return}const other=records.filter(x=>x.id!==r.id&&x.classification==='standard'&&x.calibrationSaved&&x.unit);if(other.some(x=>x.unit!==u)){if(!confirm('Some saved standards use a different unit. Saving this standard will invalidate the calibration until all units match. Continue?'))return}r.concentration=c;r.unit=u;r.calibrationSaved=true;$('standardMsg').textContent='Standard saved and included in the calibration curve.';renderResults()};
 function selectedForExport(){const ids=[...exportSelected];return ids.length?records.filter(r=>ids.includes(r.id)):(selectedRecord()?[selectedRecord()]:[])}
@@ -884,7 +1064,25 @@ $('exportVideo').onclick=()=>{
   const ext=type.includes('mp4')?'mp4':type.includes('ogg')?'ogv':'webm';
   downloadBlob(r.videoBlob,`${safe(r.name)}.${ext}`);
 };
-$('exportSummary').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Select at least one record.');return}const lines=['name;source;classification;channel;included_replicates;detected_replicates;mean_signal;signal_sd;signal_cv_percent;mean_concentration;concentration_sd;concentration_cv_percent;unit'];list.forEach(r=>{['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const ss=stat(peakSignals(r,ch));let cm='',cd='',cc='',unit='';if(r.classification==='sample'){const rr=resultForSample(r,ch);if(rr.ok){cm=fmtDot(rr.cs.mean);cd=fmtDot(rr.cs.sd);cc=fmtDot(rr.cs.cv);unit=rr.reg.unit}}else if(r.classification==='standard'&&r.calibrationSaved){cm=fmtDot(r.concentration);unit=r.unit}lines.push([r.name,r.source,r.classification,ch.toUpperCase(),peakSignals(r,ch).length,r.peaks.length,fmtDot(ss.mean),fmtDot(ss.sd),fmtDot(ss.cv),cm,cd,cc,unit].map(csvCell).join(';'))})});downloadText(lines.join('\n'),'CL_RGB_resumo.csv')};
+$('exportSummary').onclick=()=>{
+  const list=selectedForExport();
+  if(!list.length){alert('Select at least one record.');return}
+  const lines=['name;source;classification;channel;included_injections;detected_injections;mean_signal_counts;signal_sd_counts;signal_cv_percent;calculated_sample_concentration;known_standard_concentration;unit'];
+  list.forEach(r=>{
+    ['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{
+      const sig=stat(peakSignals(r,ch));
+      let sampleC='',standardC='',unit='';
+      if(r.classification==='sample'){
+        const rr=resultForSample(r,ch);
+        if(rr.ok){sampleC=fmtDot(rr.concentration);unit=rr.reg.unit}
+      }else if(r.classification==='standard'&&r.calibrationSaved){
+        standardC=fmtDot(r.concentration);unit=r.unit;
+      }
+      lines.push([r.name,r.source,r.classification,ch.toUpperCase(),sig.n,r.peaks.length,fmtDot(sig.mean),fmtDot(sig.sd),fmtDot(sig.cv),sampleC,standardC,unit].map(csvCell).join(';'));
+    });
+  });
+  downloadText(lines.join('\n'),'CL_RGB_summary.csv');
+};
 $('exportFull').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Select at least one record.');return}const lines=['CL RGB Analyzer - complete export'];list.forEach(r=>{lines.push('',`RECORD;${csvCell(r.name)}`,`source;${csvCell(r.source)}`,`classification;${csvCell(r.classification)}`,`frame_interval_s;${fmtDot(r.interval)}`,`minimum_peak_gap_s;${fmtDot(r.gap)}`,`number_of_replicates;${r.nRep}`,`roi_nx;${fmtDot(r.roi.nx)}`,`roi_ny;${fmtDot(r.roi.ny)}`,`roi_diameter_px;${r.roi.diameter}`);if(r.classification==='standard'&&r.calibrationSaved)lines.push(`standard_concentration;${fmtDot(r.concentration)}`,`unit;${csvCell(r.unit)}`);lines.push('TIME SERIES','time_s;R_mean;G_mean;B_mean');r.data.forEach(d=>lines.push(`${fmtDot(d.t)};${fmtDot(d.r)};${fmtDot(d.g)};${fmtDot(d.b)}`));lines.push('MAXIMA BY REPLICATE','replicate;included_in_calculations;time_R;R_max;time_G;G_max;time_B;B_max');r.peaks.forEach(p=>lines.push(`${p.rep};${isRepIncluded(r,p)?1:0};${fmtDot(p.tr)};${fmtDot(p.r)};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const reg=regression(ch);if(reg.ok)lines.push(`CALIBRATION_${ch.toUpperCase()};slope=${fmtDot(reg.slope)};intercept=${fmtDot(reg.intercept)};R2=${fmtDot(reg.r2)};Syx=${fmtDot(reg.syx)};LD=${fmtDot(reg.lod)};LQ=${fmtDot(reg.loq)};unidade=${csvCell(reg.unit)}`)})});downloadText(lines.join('\n'),'CL_RGB_resultados_completos.csv')};
 updateRoiControls();drawTemporal('liveChart',[],['g','b']);displaySelectedReprocessingProfile();renderRecords();
 </script>
