@@ -35,7 +35,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 .log{height:280px;overflow:auto;border:1px solid #e4e8f0;border-radius:8px;background:#fbfcfe;padding:8px;font:12px Consolas,monospace;white-space:pre-wrap}
 .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{border:1px solid #e4e8f0;border-radius:9px;padding:10px;background:#fbfcfe}.metric .k{font-size:12px;color:var(--muted)}.metric .v{font-size:20px;font-weight:700;margin-top:5px}.calMetrics{grid-template-columns:repeat(2,1fr)}
 .tableWrap{overflow:auto;border:1px solid #e4e8f0;border-radius:9px;max-height:620px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:8px;border-bottom:1px solid #eef1f6;text-align:left;white-space:nowrap}th{background:#f7f9fc;position:sticky;top:0;z-index:1}.recordRow.selected{background:#eef4ff}.classSel{min-width:135px;padding:6px}.trash{border:0;background:transparent;color:#475467;font-size:16px}.trash:hover{color:var(--red)}
-.videoList{max-height:390px;overflow:auto}.videoItem{display:flex;justify-content:space-between;align-items:center;padding:9px;border-bottom:1px solid #eef1f6}.videoItem.selected{background:#eef4ff}.videoItem button{border:0;background:transparent;color:#344054}
+.videoList{max-height:390px;overflow:auto}.videoItem{display:flex;justify-content:space-between;align-items:center;padding:9px;border-bottom:1px solid #eef1f6}.videoItem.selected{background:#eef4ff}.videoItem .processedTag{font-size:11px;color:#137333;font-weight:700;margin-left:auto;white-space:nowrap}.reProfileLabel{font-size:12px;color:#174ea6;margin:7px 0 9px;line-height:1.4;font-weight:700}.videoItem button{border:0;background:transparent;color:#344054}
 .note{font-size:12px;color:var(--muted);line-height:1.4}.okText{color:var(--green)}.badText{color:var(--red)}.resultHeader{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.channelTabs{display:flex;gap:5px}.channelTabs button{min-width:42px;border:1px solid #cfd8e8;background:#fff;color:#344054;border-radius:7px;padding:6px 10px}.channelTabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .stdPanel{border:1px solid #b7cef8;background:#f8fbff;border-radius:10px;padding:12px;margin-top:12px}.hidden{display:none!important}.exportRow{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap}.footer{font-size:12px;color:var(--muted);padding:12px 4px;text-align:right}.pill{display:inline-flex;gap:6px;align-items:center;background:#eef4ff;color:#174ea6;border-radius:999px;padding:5px 9px;font-size:12px}.progress{font-size:12px;color:var(--green);font-weight:700;margin-top:8px}
 /* Reprocessing video controls, independent of the analytical acquisition interval. */
@@ -110,7 +110,7 @@ button,input,select{font:inherit}button{cursor:pointer}
           <div class="roiPresetButtons"><button id="saveReRoi" type="button" class="btn secondary">Save ROI Preset</button><button id="copyReRoi" type="button" class="btn secondary">Copy ROI Coordinates</button></div>
           <div id="reSavedRoiStatus" class="note">Save a selected ROI for future acquisitions.</div>
         </div></div>
-      <div class="card"><h2>RGB time profile</h2><div class="channels" id="reChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><canvas id="reChart" class="chart"></canvas><div id="reProgress" class="progress"></div></div>
+      <div class="card"><h2>RGB time profile</h2><div class="channels" id="reChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><div id="reProfileLabel" class="reProfileLabel">Select a video to view its processed RGB profile.</div><canvas id="reChart" class="chart"></canvas><div id="reProgress" class="progress"></div></div>
       <div class="card"><h2>Reprocessing settings</h2><div class="field"><label>Number of replicates</label><input id="reReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Minimum time between peaks (s)</label><input id="rePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Analyzed frame interval (s)</label><input id="reFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><button id="executeReprocess" class="btn" style="width:100%;margin-top:12px">▶ Run reprocessing</button></div>
       <div class="card"><div class="row spaced"><h2>Videos loaded for reprocessing</h2><label class="btn secondary" style="display:inline-block">+ Add videos<input id="videoFiles" type="file" accept="video/*" multiple hidden></label></div><div id="videoList" class="videoList"></div></div>
     </div>
@@ -151,7 +151,7 @@ let liveTimer=null,liveStartPerf=0,liveData=[],liveActive=false,liveRoi={x:0,y:0
 let liveAutoBaseline=null,liveAutoRoiFound=false;
 let reAutoRoiEnabled=false,reAutoRoiLastResult=null,reprocessRunActive=false,rePreviewAutoSearching=false,reExpanded=false;
 const AUTO_ROI_MIN_DELTA=1.5;
-let videoFiles=[],videoUrls=[],selectedVideoIndex=-1,reData=[],records=[],recordId=1,selectedRecordId=null,resultChannel='g',exportSelected=new Set();
+let videoFiles=[],videoUrls=[],selectedVideoIndex=-1,reData=[],reprocessedProfiles=new WeakMap(),records=[],recordId=1,selectedRecordId=null,resultChannel='g',exportSelected=new Set();
 let reTimelineDragging=false,reSeekSequence=0,reRequestedPreviewTime=0;
 const ROI_PRESET_STORAGE_KEY='cl_rgb_analyzer_roi_preset_v1';
 let savedRoiPreset=null,livePresetApplied=false;
@@ -586,7 +586,23 @@ for(const evt of ['loadedmetadata','loadeddata','timeupdate','seeking','seeked',
 $('reOverlay').addEventListener('pointerdown',()=>{if(!$('reVideo').paused)$('reVideo').pause()});
 updateReTransport();
 $('videoFiles').onchange=e=>{const files=[...e.target.files];files.forEach(f=>{videoFiles.push(f);videoUrls.push(URL.createObjectURL(f))});renderVideoList();if(selectedVideoIndex<0&&videoFiles.length)selectVideo(0);e.target.value=''};
-function renderVideoList(){$('videoList').innerHTML=videoFiles.map((f,i)=>`<div class="videoItem ${i===selectedVideoIndex?'selected':''}"><button onclick="selectVideo(${i})">🎞 ${escapeHtml(f.name)}</button><button onclick="removeVideo(${i})">🗑</button></div>`).join('')}
+function renderVideoList(){$('videoList').innerHTML=videoFiles.map((f,i)=>`<div class="videoItem ${i===selectedVideoIndex?'selected':''}"><button onclick="selectVideo(${i})" title="Show this video and its processed RGB profile">🎞 ${escapeHtml(f.name)}</button>${reprocessedProfiles.has(f)?'<span class="processedTag" title="Processed RGB profile available">✓ Processed</span>':''}<button onclick="removeVideo(${i})" title="Remove video">🗑</button></div>`).join('')}
+// The reprocessing chart always follows the highlighted file, not the last processed file.
+// Keep each profile tied to its File object, avoiding collisions between equal filenames.
+function displaySelectedReprocessingProfile(){
+  const file=videoFiles[selectedVideoIndex];
+  const profile=file?reprocessedProfiles.get(file):null;
+  reData=profile?profile.data:[];
+  if(profile){
+    const {roi,diameter,interval}=profile;
+    $('reProfileLabel').textContent=`Showing: ${file.name} · Processed ROI ${diameter} px (X=${roi.x.toFixed(1)}, Y=${roi.y.toFixed(1)}) · Frame interval ${interval.toFixed(3)} s`;
+  }else if(file){
+    $('reProfileLabel').textContent=`${file.name} · ${reprocessRunActive?'Waiting for processing...':'No processed profile yet. Click Run reprocessing.'}`;
+  }else{
+    $('reProfileLabel').textContent='Select a video to view its processed RGB profile.';
+  }
+  drawTemporal('reChart',reData,channelsFrom('reChannels'));
+}
 window.selectVideo=async (i,opts={})=>{
   const oldV=$('reVideo');
   let rel=opts.roiRel||null;
@@ -598,6 +614,7 @@ window.selectVideo=async (i,opts={})=>{
   oldV.pause();
   selectedVideoIndex=i;
   renderVideoList();
+  displaySelectedReprocessingProfile();
   const v=$('reVideo');
   v.src=videoUrls[i];
   v.load();
@@ -621,13 +638,15 @@ window.selectVideo=async (i,opts={})=>{
   updateReTransport();
 };window.removeVideo=i=>{
   if(reprocessRunActive)return;
+  const removedFile=videoFiles[i];
   URL.revokeObjectURL(videoUrls[i]);videoFiles.splice(i,1);videoUrls.splice(i,1);
   if(selectedVideoIndex===i){
     selectedVideoIndex=-1;
     $('reVideo').pause();$('reVideo').removeAttribute('src');$('reVideo').load();
     if(videoFiles.length)selectVideo(Math.min(i,videoFiles.length-1));
   }else if(selectedVideoIndex>i)selectedVideoIndex--;
-  renderVideoList();updateReTransport();
+  reprocessedProfiles.delete(removedFile);
+  renderVideoList();displaySelectedReprocessingProfile();updateReTransport();
 };
 async function seekVideo(v,t){if(Math.abs((v.currentTime||0)-t)<.002)return;const p=waitEvent(v,'seeked');v.currentTime=t;await p}
 async function processFile(index,roiRel,diameter,channels,dt,nRep,gap){const v=$('reVideo');v.src=videoUrls[index];await waitEvent(v,'loadedmetadata');const dur=v.duration;if(!finite(dur)||dur<=0)throw new Error('Invalid video duration');const roi={x:roiRel.nx*v.videoWidth,y:roiRel.ny*v.videoHeight,valid:true,locked:true},data=[],total=Math.floor(dur/dt)+1;for(let j=0,t=0;t<=dur+1e-8;j++,t=j*dt){$('reProgress').textContent=`Processing ${index+1}/${videoFiles.length}: ${Math.min(100,Math.round(100*j/total))}%`;await seekVideo(v,Math.min(t,dur));const s=meanRoi(v,roi,diameter,channels);if(s){s.t=Math.min(t,dur);data.push(s)}}const peaks=detectPeaks(data,nRep,gap,channels);return{data,peaks,roi}}
@@ -651,6 +670,10 @@ $('executeReprocess').onclick=async()=>{
 
   $('executeReprocess').disabled=true;
   reprocessRunActive=true;
+  // New run: clear cached chart profiles so previous ROI/intervals cannot be confused with this run.
+  reprocessedProfiles=new WeakMap();
+  renderVideoList();
+  displaySelectedReprocessingProfile();
   updateReTransport();
   try{
     // A busca automática só pode começar depois deste clique em Run reprocessing.
@@ -680,8 +703,11 @@ $('executeReprocess').onclick=async()=>{
 
     for(let i=0;i<videoFiles.length;i++){
       const r=await processFile(i,rel,diameter,channels,dt,nRep,gap);
-      reData=r.data;
-      drawTemporal('reChart',reData,channels);
+      reprocessedProfiles.set(videoFiles[i],{
+        data:r.data,roi:{x:r.roi.x,y:r.roi.y},diameter,interval:dt
+      });
+      renderVideoList();
+      if(i===selectedVideoIndex)displaySelectedReprocessingProfile();
       addRecord({
         name:videoFiles[i].name.replace(/\.[^.]+$/,''),
         source:'Reprocessamento',
@@ -691,7 +717,7 @@ $('executeReprocess').onclick=async()=>{
       });
     }
 
-    // Return to the selected video WITHOUT losing the ROI position.
+    // Return to the selected video AND its stored profile, without losing the ROI.
     await selectVideo(restoreIndex,{roiRel:rel,locked:lockedState,time:displayTime,internal:true});
     const rv=$('reVideo');
     reRoi.x=clamp(rel.nx,0,1)*(rv.videoWidth||1);
@@ -738,7 +764,7 @@ $('exportVideo').onclick=()=>{
 };
 $('exportSummary').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Select at least one record.');return}const lines=['name;source;classification;channel;mean_signal;signal_sd;signal_cv_percent;mean_concentration;concentration_sd;concentration_cv_percent;unit'];list.forEach(r=>{['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const ss=stat(peakSignals(r,ch));let cm='',cd='',cc='',unit='';if(r.classification==='sample'){const rr=resultForSample(r,ch);if(rr.ok){cm=fmtDot(rr.cs.mean);cd=fmtDot(rr.cs.sd);cc=fmtDot(rr.cs.cv);unit=rr.reg.unit}}else if(r.classification==='standard'&&r.calibrationSaved){cm=fmtDot(r.concentration);unit=r.unit}lines.push([r.name,r.source,r.classification,ch.toUpperCase(),fmtDot(ss.mean),fmtDot(ss.sd),fmtDot(ss.cv),cm,cd,cc,unit].map(csvCell).join(';'))})});downloadText(lines.join('\n'),'CL_RGB_resumo.csv')};
 $('exportFull').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Select at least one record.');return}const lines=['CL RGB Analyzer - complete export'];list.forEach(r=>{lines.push('',`RECORD;${csvCell(r.name)}`,`source;${csvCell(r.source)}`,`classification;${csvCell(r.classification)}`,`frame_interval_s;${fmtDot(r.interval)}`,`minimum_peak_gap_s;${fmtDot(r.gap)}`,`number_of_replicates;${r.nRep}`,`roi_nx;${fmtDot(r.roi.nx)}`,`roi_ny;${fmtDot(r.roi.ny)}`,`roi_diameter_px;${r.roi.diameter}`);if(r.classification==='standard'&&r.calibrationSaved)lines.push(`standard_concentration;${fmtDot(r.concentration)}`,`unit;${csvCell(r.unit)}`);lines.push('TIME SERIES','time_s;R_mean;G_mean;B_mean');r.data.forEach(d=>lines.push(`${fmtDot(d.t)};${fmtDot(d.r)};${fmtDot(d.g)};${fmtDot(d.b)}`));lines.push('MAXIMA BY REPLICATE','replicate;time_R;R_max;time_G;G_max;time_B;B_max');r.peaks.forEach(p=>lines.push(`${p.rep};${fmtDot(p.tr)};${fmtDot(p.r)};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const reg=regression(ch);if(reg.ok)lines.push(`CALIBRATION_${ch.toUpperCase()};slope=${fmtDot(reg.slope)};intercept=${fmtDot(reg.intercept)};R2=${fmtDot(reg.r2)};Syx=${fmtDot(reg.syx)};LD=${fmtDot(reg.lod)};LQ=${fmtDot(reg.loq)};unidade=${csvCell(reg.unit)}`)})});downloadText(lines.join('\n'),'CL_RGB_resultados_completos.csv')};
-updateRoiControls();drawTemporal('liveChart',[],['g','b']);drawTemporal('reChart',[],['g','b']);renderRecords();
+updateRoiControls();drawTemporal('liveChart',[],['g','b']);displaySelectedReprocessingProfile();renderRecords();
 </script>
 </body>
 </html>
