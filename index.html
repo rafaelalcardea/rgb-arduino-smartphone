@@ -137,7 +137,7 @@ button,input,select{font:inherit}button{cursor:pointer}
           <div id="liveSavedRoiStatus" class="note">No saved ROI preset.</div>
         </div></div>
       <div class="card"><h2>RGB time profile</h2><div class="channels" id="liveChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><canvas id="liveChart" class="chart"></canvas><div id="liveProgress" class="progress"></div></div>
-      <div class="card"><h2>Acquisition settings</h2><div class="field"><label>Run name</label><input id="runName" value="Run 001"></div><div class="field"><label>Number of replicates</label><input id="liveReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Minimum time between peaks (s)</label><input id="livePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Analyzed frame interval (s)</label><input id="liveFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><h3>Operating mode</h3><label class="inline"><input type="radio" name="liveMode" value="image">Image only</label><label class="inline"><input type="radio" name="liveMode" value="arduino" checked>Image + Arduino Due</label><div class="row" style="margin-top:14px"><button id="startLive" class="btn good" style="flex:1">▶ START</button><button id="stopLive" class="btn stop" style="flex:1">■ STOP</button></div><h3>Washing</h3><div class="washRow"><button id="washReagents" class="btn secondary">💧 Wash reagents</button><button id="washPath" class="btn secondary">↻ Wash flow path</button></div><div id="washMsg" class="note" style="margin-top:7px">Washing commands are sent to Arduino Due over the serial connection.</div><h3>Log</h3><div id="serialLog" class="log"></div><div class="row" style="margin-top:8px"><button id="clearLog" class="btn secondary">Clear log</button></div></div>
+      <div class="card"><h2>Acquisition settings</h2><div class="field"><label>Run name</label><input id="runName" value="Run 001"></div><div class="field"><label>Number of replicates</label><input id="liveReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Minimum time between peaks (s)</label><input id="livePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Analyzed frame interval (s)</label><input id="liveFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><h3>Operating mode</h3><label class="inline"><input type="radio" name="liveMode" value="image">Image only</label><label class="inline"><input type="radio" name="liveMode" value="arduino" checked>Image + Arduino Due</label><div class="row" style="margin-top:14px"><button id="startLive" class="btn good" style="flex:1">▶ START</button><button id="stopLive" class="btn stop" style="flex:1">■ STOP</button></div><h3>Washing</h3><div class="washRow"><button id="washReagents" class="btn secondary">💧 Wash reagents</button><button id="washPath" class="btn secondary">↻ Wash flow path</button></div><div id="washMsg" class="note" style="margin-top:7px">Washing commands are sent to Arduino Due over the serial connection.</div><h3>Log</h3><div id="serialLog" class="log"></div><div class="row" style="margin-top:8px"><button id="copySerialMaxima" class="btn secondary" disabled>Copy for Excel</button><button id="clearLog" class="btn secondary">Clear log</button></div></div>
     </div>
   </section>
 
@@ -177,7 +177,7 @@ button,input,select{font:inherit}button{cursor:pointer}
         <h2>Time profile of the selected record</h2>
         <canvas id="resultChart" class="chart smallChart"></canvas>
       </div>
-      <div class="card"><h2>Analytical results</h2><div id="selectedRecordInfo" class="note" style="margin-bottom:10px">No record selected.</div><div id="sampleMetrics" class="metrics"></div><div id="replicatePanel"><div class="sectionDivider"></div><div class="repHeading"><h3>Individual replicates</h3><span id="replicateCount" class="pill">0 / 0 included</span></div><div class="repHint">Each row is one injection in this run. All valid peaks are included by default. Uncheck a failed injection to exclude it from the signal mean, SD, CV and the single calculated concentration for this run. Original values are preserved.</div><div class="repTableWrap"><table class="repTable"><thead><tr><th>Use</th><th>Rep.</th><th>Peak time (s)</th><th id="repPeakHeader">Peak G (counts)</th></tr></thead><tbody id="replicateRows"></tbody></table></div><div id="replicateNote" class="repHint"></div></div><div id="standardPanel" class="stdPanel hidden"><h3>Selected standard data</h3><div class="field"><label>Known concentration</label><input id="standardConcentration" type="number" step="any"></div><div class="field"><label>Unit</label><input id="standardUnit" placeholder="e.g., µmol L⁻¹"></div><button id="saveStandard" class="btn">💾 Save</button><div id="standardMsg" class="note" style="margin-top:8px"></div></div><div id="resultMsg" class="note" style="margin-top:10px"></div></div>
+      <div class="card"><h2>Analytical results</h2><div id="selectedRecordInfo" class="note" style="margin-bottom:10px">No record selected.</div><div id="sampleMetrics" class="metrics"></div><div id="replicatePanel"><div class="sectionDivider"></div><div class="repHeading"><h3>Individual replicates</h3><span id="replicateCount" class="pill">0 / 0 included</span></div><div class="repHint">Each row is one injection in this run. All valid peaks are included by default. Uncheck a failed injection to exclude it from the signal mean, SD, CV and the single calculated concentration for this run. Original values are preserved.</div><div class="repTableWrap"><table class="repTable"><thead><tr><th>Use</th><th>Rep.</th><th>Peak time (s)</th><th id="repPeakHeader">Peak G (counts)</th></tr></thead><tbody id="replicateRows"></tbody></table></div><div id="replicateNote" class="repHint"></div></div><div id="standardPanel" class="stdPanel hidden"><h3>Selected standard data</h3><div class="field"><label>Known concentration</label><input id="standardConcentration" type="number" step="any"></div><div class="field"><label>Unit</label><input id="standardUnit" placeholder="e.g., µmol L⁻¹"></div><button id="saveStandard" class="btn">💾 Save</button><div id="standardMsg" class="note" style="margin-top:8px"></div></div></div>
     </div>
   </section>
   <div class="footer">CL RGB Analyzer — test version</div>
@@ -196,6 +196,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const waitEvent=(el,name)=>new Promise((resolve,reject)=>{const ok=()=>{cleanup();resolve()},bad=()=>{cleanup();reject(new Error('Failed to load media'))},cleanup=()=>{el.removeEventListener(name,ok);el.removeEventListener('error',bad)};el.addEventListener(name,ok,{once:true});el.addEventListener('error',bad,{once:true})});
 let stream=null,recorder=null,chunks=[],currentVideoBlob=null,serialPort=null,serialReader=null,serialRunning=false,serialBuffer='',currentSerialRep=null,serialRepWindows=[];
 let serialWriteQueue=Promise.resolve(),liveRunMode='image',liveStopping=false,manualStopInFlight=false;
+let serialMaximaReading=false,serialMaxima=[],lastSerialMaxima=[];
 let liveTimer=null,liveStartPerf=0,liveData=[],liveActive=false,liveRoi={x:0,y:0,locked:false,valid:false},reRoi={x:0,y:0,locked:false,valid:false};let liveAutoRoiEnabled=false,liveAutoRoiBest=-Infinity,liveAutoRoiLastScan=0;
 let liveAutoBaseline=null,liveAutoRoiFound=false;
 let reAutoRoiEnabled=false,reAutoRoiLastResult=null,reprocessRunActive=false,rePreviewAutoSearching=false,reExpanded=false;
@@ -214,13 +215,47 @@ function channelsFrom(containerId){return[...document.querySelectorAll(`#${conta
 function mode(){return document.querySelector('input[name=liveMode]:checked')?.value||'arduino'}
 function liveChartData(){return liveDemoActive?liveDemoData:liveData}
 function log(msg){const el=$('serialLog');el.textContent+=`${new Date().toLocaleTimeString()}  ${msg}\n`;el.scrollTop=el.scrollHeight}
+// The Due sends a labelled summary followed by one bare number per replicate.
+// Only that labelled block is used for the Excel-ready result; other serial
+// messages are retained during the run for diagnostics and event timing.
+function resetSerialMaxima(){
+  serialMaximaReading=false;
+  serialMaxima=[];
+  lastSerialMaxima=[];
+  $('copySerialMaxima').disabled=true;
+}
+function showSerialMaxima(){
+  serialMaximaReading=false;
+  if(!serialMaxima.length)return; // Never invent missing results.
+  lastSerialMaxima=serialMaxima.slice();
+  const el=$('serialLog');
+  el.textContent=lastSerialMaxima.join('\n');
+  el.scrollTop=0;
+  $('copySerialMaxima').disabled=false;
+}
+$('copySerialMaxima').onclick=async()=>{
+  if(!lastSerialMaxima.length)return;
+  // One value per spreadsheet row; Brazilian Excel expects decimal commas.
+  const rows=lastSerialMaxima.map(v=>v.replace('.',',')).join('\n');
+  try{await navigator.clipboard.writeText(rows)}
+  catch(e){
+    // Works on older browsers without Clipboard API permission.
+    const area=document.createElement('textarea');area.value=rows;
+    area.style.position='fixed';area.style.opacity='0';
+    document.body.appendChild(area);area.select();
+    const ok=document.execCommand('copy');area.remove();
+    if(!ok){alert('Copy failed. Select the numbers in the log and copy them manually.');return}
+  }
+  const btn=$('copySerialMaxima');btn.textContent='Copied!';
+  setTimeout(()=>{btn.textContent='Copy for Excel'},1500);
+};
 function setConnection(which,on){const el=$(which+'State');el.textContent=on?(which==='camera'?'connected':'connected'):(which==='camera'?'disconnected':'disconnected');el.classList.toggle('on',on);const dot=$(which+'Conn').querySelector('.dot');if(dot)dot.classList.toggle('on',on)}
 function ensureDots(){['camera','arduino'].forEach(k=>{const main=$(k+'Conn').querySelector('.connMain');if(!main.querySelector('.dot')){const d=document.createElement('span');d.className='dot';main.insertBefore(d,main.children[1])}})}ensureDots();
 document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{if(btn.dataset.tab!=='reproc'&&reExpanded)setRePreviewExpanded(false);document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$('view-'+btn.dataset.tab).classList.add('active');requestAnimationFrame(()=>{drawTemporal('liveChart',liveChartData(),channelsFrom('liveChannels'));drawTemporal('reChart',reData,channelsFrom('reChannels'));renderResults()})});
 async function listCameras(){try{const dev=await navigator.mediaDevices.enumerateDevices(),cams=dev.filter(d=>d.kind==='videoinput');$('cameraSelect').innerHTML='';cams.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`Camera ${i+1}`;$('cameraSelect').appendChild(o)});return cams}catch(e){log('Error listing cameras: '+e.message);return[]}}
 async function connectCamera(){try{if(liveDemoActive)closeRecordedPreview();if(stream)stream.getTracks().forEach(t=>t.stop());let cams=await listCameras();if(!cams.length){const p=await navigator.mediaDevices.getUserMedia({video:true,audio:false});p.getTracks().forEach(t=>t.stop());cams=await listCameras()}let id=$('cameraSelect').value||cams[0]?.deviceId;if(cams.length>1){const menu=cams.map((c,i)=>`${i+1}. ${c.label||'Camera '+(i+1)}`).join('\n'),ans=prompt(`Select video source:\n${menu}`,'1'),idx=clamp((Number(ans)||1)-1,0,cams.length-1);id=cams[idx].deviceId;$('cameraSelect').value=id}stream=await navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id}}:true,audio:false});$('liveVideo').srcObject=stream;await $('liveVideo').play();setConnection('camera',true);if(!(livePresetApplied&&applyPresetToCurrentCamera())){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}log('Camera connected.')}catch(e){setConnection('camera',false);log('Failed to connect camera: '+e.message)}}$('cameraConn').onclick=connectCamera;
 async function connectArduino(){try{if(serialPort){await disconnectArduino();return}if(!('serial'in navigator)){alert('Web Serial is not supported in this browser. Use Chrome/Edge over HTTPS.');return}serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:9600});setConnection('arduino',true);serialRunning=true;readSerial();log('Arduino connected.')}catch(e){setConnection('arduino',false);log('Failed to connect Arduino: '+e.message);serialPort=null}}
-async function disconnectArduino(){serialRunning=false;try{if(serialReader){await serialReader.cancel();serialReader.releaseLock();serialReader=null}}catch(e){}try{if(serialPort)await serialPort.close()}catch(e){}serialPort=null;setConnection('arduino',false);log('Arduino disconnected.')}$('arduinoConn').onclick=connectArduino;$('clearLog').onclick=()=>{$('serialLog').textContent=''};
+async function disconnectArduino(){serialRunning=false;try{if(serialReader){await serialReader.cancel();serialReader.releaseLock();serialReader=null}}catch(e){}try{if(serialPort)await serialPort.close()}catch(e){}serialPort=null;setConnection('arduino',false);log('Arduino disconnected.')}$('arduinoConn').onclick=connectArduino;$('clearLog').onclick=()=>{$('serialLog').textContent='';resetSerialMaxima()};
 // Serialize USB commands so a manual STOP cannot conflict with a START still being written.
 async function sendSerial(text){
   if(!serialPort)throw new Error('Arduino not connected');
@@ -236,7 +271,30 @@ async function sendSerial(text){
   return send;
 }
 async function readSerial(){while(serialPort&&serialRunning){try{serialReader=serialPort.readable.getReader();while(serialRunning){const{value,done}=await serialReader.read();if(done)break;serialBuffer+=new TextDecoder().decode(value,{stream:true});let i;while((i=serialBuffer.indexOf('\n'))>=0){const line=serialBuffer.slice(0,i).replace(/\r/g,'').trim();serialBuffer=serialBuffer.slice(i+1);if(line)handleSerialLine(line)}}}catch(e){if(serialRunning)log('Serial error: '+e.message)}finally{try{serialReader?.releaseLock()}catch(e){}serialReader=null}break}}
-function handleSerialLine(line){log(line);let m=line.match(/Replicata\s*=\s*(\d+)/i);if(m&&liveActive){const rep=Number(m[1]),t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}currentSerialRep=rep;serialRepWindows.push({rep,start:t,end:NaN})}if(/Fim da sequencia analitica/i.test(line)){const t=(performance.now()-liveStartPerf)/1000;if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}currentSerialRep=null;if(liveActive)stopLiveAcquisition(true)}}
+function handleSerialLine(line){
+  log(line);
+  if(/^Valores\s+m[aá]ximos\s*:?\s*$/i.test(line)){
+    serialMaximaReading=true;
+    serialMaxima=[];
+  }else if(serialMaximaReading&&/^[+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$/.test(line)){
+    serialMaxima.push(line.trim().replace(',','.'));
+  }
+  let m=line.match(/Replicata\s*=\s*(\d+)/i);
+  if(m&&liveActive){
+    const rep=Number(m[1]),t=(performance.now()-liveStartPerf)/1000;
+    if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}
+    currentSerialRep=rep;serialRepWindows.push({rep,start:t,end:NaN});
+  }
+  if(/Fim da sequencia analitica/i.test(line)){
+    const t=(performance.now()-liveStartPerf)/1000;
+    if(currentSerialRep!=null){const prev=serialRepWindows.find(x=>x.rep===currentSerialRep&&!finite(x.end));if(prev)prev.end=t}
+    currentSerialRep=null;
+    // Wait for recorder shutdown before replacing the diagnostic log, so
+    // subsequent completion messages cannot pollute the five-value list.
+    const finish=liveActive?stopLiveAcquisition(true):Promise.resolve();
+    Promise.resolve(finish).finally(showSerialMaxima);
+  }
+}
 // ROI values are stored in original video/camera frame coordinates, never canvas CSS pixels.
 function roiContext(which){return which==='live'?{v:$('liveVideo'),roi:liveRoi,d:roiDiameterFor('live'),overlay:$('liveOverlay')}:{v:$('reVideo'),roi:reRoi,d:roiDiameterFor('re'),overlay:$('reOverlay')}}
 function roiPresetSummary(p){return p?`Saved preset: X ${Math.round(p.nx*p.width)}, Y ${Math.round(p.ny*p.height)}, diameter ${p.diameter} px (${p.width} × ${p.height} frame).`:'No saved ROI preset.'}
@@ -571,7 +629,7 @@ function isRepIncluded(rec,p){return !(rec.excludedReplicates||[]).includes(p.re
 function peakSignals(rec,ch){return rec.peaks.filter(p=>isRepIncluded(rec,p)).map(p=>p[ch]).filter(finite)}
 async function startRecorder(){chunks=[];currentVideoBlob=null;if(!stream||!window.MediaRecorder)return;try{recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onstop=()=>{currentVideoBlob=new Blob(chunks,{type:recorder.mimeType||'video/webm'})};recorder.start()}catch(e){log('Video recording unavailable: '+e.message)}}
 async function stopRecorder(){if(!recorder||recorder.state==='inactive')return currentVideoBlob;return await new Promise(resolve=>{const done=()=>setTimeout(()=>resolve(currentVideoBlob),0);recorder.addEventListener('stop',done,{once:true});try{recorder.stop()}catch(e){resolve(currentVideoBlob)}})}
-async function startLiveAcquisition(){if(liveActive||liveStopping)return;if(liveDemoActive)closeRecordedPreview();liveRunMode=mode();if(!stream){await connectCamera();if(!stream)return}if(!liveRoi.valid){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}const channels=channelsFrom('liveChannels');if(!channels.length){alert('Select at least one channel.');return}liveData=[];serialRepWindows=[];currentSerialRep=null;liveAutoRoiBest=-Infinity;liveAutoRoiLastScan=0;liveAutoRoiFound=false;if(liveAutoRoiEnabled&&!liveRoi.locked){$('liveProgress').textContent='Capturing background image for automatic ROI...';const ok=await captureLiveAutoBaseline($('liveVideo'));if(!ok){alert('Unable to capture a background image for automatic ROI.');return}log('Automatic ROI: background image captured.')}liveActive=true;liveStartPerf=performance.now();$('liveProgress').textContent=liveAutoRoiEnabled&&!liveRoi.locked?'Acquisition in progress — searching for the area with the largest increase in RGB emission...':'Acquisition in progress';await startRecorder();const dt=Math.max(.01,Number($('liveFrameInterval').value)||.1),tick=()=>{if(!liveActive)return;const now=performance.now();if(liveAutoRoiEnabled&&!liveRoi.locked&&now-liveAutoRoiLastScan>=150){liveAutoRoiLastScan=now;if(applyLiveAutoRoiCandidate()){$('liveProgress').textContent=`Automatic ROI active — greatest emission increase detected (ΔRGB ${liveAutoRoiBest.toFixed(1)}).`}}const v=meanRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),channels);if(v){v.t=(performance.now()-liveStartPerf)/1000;liveData.push(v);drawTemporal('liveChart',liveData,channels)}};tick();liveTimer=setInterval(tick,dt*1000);if(liveRunMode==='arduino'){if(!serialPort){log('Arduino not connected. Connect it or use Image only mode.');stopLiveAcquisition(false,false);return}await sleep(150);if(!liveActive)return;try{await sendSerial('START')}catch(e){log(e.message);stopLiveAcquisition(false,false)}}}
+async function startLiveAcquisition(){if(liveActive||liveStopping)return;if(liveDemoActive)closeRecordedPreview();liveRunMode=mode();if(!stream){await connectCamera();if(!stream)return}if(!liveRoi.valid){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}const channels=channelsFrom('liveChannels');if(!channels.length){alert('Select at least one channel.');return}resetSerialMaxima();liveData=[];serialRepWindows=[];currentSerialRep=null;liveAutoRoiBest=-Infinity;liveAutoRoiLastScan=0;liveAutoRoiFound=false;if(liveAutoRoiEnabled&&!liveRoi.locked){$('liveProgress').textContent='Capturing background image for automatic ROI...';const ok=await captureLiveAutoBaseline($('liveVideo'));if(!ok){alert('Unable to capture a background image for automatic ROI.');return}log('Automatic ROI: background image captured.')}liveActive=true;liveStartPerf=performance.now();$('liveProgress').textContent=liveAutoRoiEnabled&&!liveRoi.locked?'Acquisition in progress — searching for the area with the largest increase in RGB emission...':'Acquisition in progress';await startRecorder();const dt=Math.max(.01,Number($('liveFrameInterval').value)||.1),tick=()=>{if(!liveActive)return;const now=performance.now();if(liveAutoRoiEnabled&&!liveRoi.locked&&now-liveAutoRoiLastScan>=150){liveAutoRoiLastScan=now;if(applyLiveAutoRoiCandidate()){$('liveProgress').textContent=`Automatic ROI active — greatest emission increase detected (ΔRGB ${liveAutoRoiBest.toFixed(1)}).`}}const v=meanRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),channels);if(v){v.t=(performance.now()-liveStartPerf)/1000;liveData.push(v);drawTemporal('liveChart',liveData,channels)}};tick();liveTimer=setInterval(tick,dt*1000);if(liveRunMode==='arduino'){if(!serialPort){log('Arduino not connected. Connect it or use Image only mode.');stopLiveAcquisition(false,false);return}await sleep(150);if(!liveActive)return;try{await sendSerial('START')}catch(e){log(e.message);stopLiveAcquisition(false,false)}}}
 async function stopLiveAcquisition(auto=false,createRecord=true){if(!liveActive||liveStopping)return;liveStopping=true;liveActive=false;try{if(liveTimer){clearInterval(liveTimer);liveTimer=null}const stoppedVideoBlob=await stopRecorder();if(liveAutoRoiEnabled&&!liveRoi.locked){if(liveAutoRoiFound){$('liveProgress').textContent='Run finished — region with the greatest RGB emission increase preserved. Check its position and click “Lock ROI”.';log(`Automatic ROI finished — best ΔRGB = ${liveAutoRoiBest.toFixed(2)}.`)}else{$('liveProgress').textContent='Run finished — insufficient increase in emission to reposition the ROI. Try another positioning run.';log('Automatic ROI: no emission increase above the threshold was detected.')}}else{$('liveProgress').textContent=auto?'Sequence finished automatically':'Acquisition stopped'}if(createRecord&&liveData.length){const channels=channelsFrom('liveChannels'),n=Math.max(1,Number($('liveReplicates').value)||5),gap=Math.max(0,Number($('livePeakGap').value)||5),peaks=detectPeaks(liveData,n,gap,channels,serialRepWindows);addRecord({name:$('runName').value||`Run ${recordId}`,source:'Aquisição',channels,interval:Number($('liveFrameInterval').value),gap,nRep:n,roi:{nx:liveRoi.x/($('liveVideo').videoWidth||1),ny:liveRoi.y/($('liveVideo').videoHeight||1),diameter:roiDiameterFor('live')},data:liveData.map(x=>({...x})),peaks,videoBlob:stoppedVideoBlob});incrementRunName()}}finally{liveStopping=false}}
 function incrementRunName(){const s=$('runName').value,m=s.match(/^(.*?)(\d+)$/);$('runName').value=m?m[1]+String(Number(m[2])+1).padStart(m[2].length,'0'):`Run ${String(recordId).padStart(3,'0')}`}// Stop locally immediately AND ask Arduino Due to interrupt its analytical sequence.
 // The firmware must handle STOP during execution; the browser cannot force it to do so.
@@ -1037,19 +1095,13 @@ function renderResults(){
     ['Signal SD',fmt(sig.sd,3),'counts'],
     ['Signal CV',fmt(sig.cv,2),'%']
   ];
-  let extra='';
   if(rec.classification==='sample'){
     const rr=resultForSample(rec,resultChannel);
     metrics.push(['Calculated concentration',rr.ok?fmt(rr.concentration,3):'—',rr.ok?rr.reg.unit:'']);
-    if(!rr.ok)extra=rr.reg?.msg||'Save valid standards to calculate the sample concentration.';
   }else if(rec.classification==='standard'&&rec.calibrationSaved){
     metrics.push(['Known concentration',fmt(rec.concentration,3),rec.unit]);
-  }else if(rec.classification==='none'){
-    extra='Classify this record as Standard or Sample to use it analytically.';
   }
   $('sampleMetrics').innerHTML=metrics.map(([name,value,unit])=>resultMetric(name,value,unit)).join('');
-  const scope=sig.n===0?'No valid peaks selected.':`${sig.n} included peak${sig.n===1?'':'s'} in this run.`;
-  $('resultMsg').textContent=`${scope} The SD and CV characterize within-run repeatability of RGB peak counts. The concentration is one result calculated from the average of the included peaks. Assess between-run concentration precision using independent runs.${extra?' '+extra:''}`;
   renderReplicates(rec);
 }
 $('calYAxisScale').onchange=renderResults;
