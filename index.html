@@ -48,7 +48,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 .demoNotice.hidden{display:none!important}
 .demoTools{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:8px}
 .demoTools.hidden{display:none!important}
-/* Reprocessing video controls, independent of the analytical acquisition interval. */
+/* Reprocessing video controls use an independent frame interval. */
 .rePreviewBackdrop{display:none;position:fixed;inset:0;background:#071327b3;z-index:1090}
 .rePreviewBackdrop.active{display:block}
 .rePreviewCard.rePreviewExpanded{position:fixed;inset:12px;z-index:1091;overflow:auto;max-height:calc(100dvh - 24px);box-shadow:0 18px 80px #0007;padding:16px;background:#fff}
@@ -70,7 +70,7 @@ button,input,select{font:inherit}button{cursor:pointer}
 .reTransport input[type=range]{width:100%;padding:0;border:none;margin:10px 0 2px;accent-color:var(--blue);cursor:pointer}
 .reTransport input[type=range]:disabled{opacity:.45;cursor:not-allowed}
 .reTransport .note{margin-top:5px}
-.calHint{margin:8px 0 10px;padding:8px 10px;background:#f8fbff;border:1px solid #d7e5ff;border-radius:8px;color:#174ea6;font-size:12px;line-height:1.4}.sectionDivider{height:1px;background:#e8edf5;margin:16px 0}
+.frameAcqMode{padding:9px 10px;border:1px solid #b7cef8;border-radius:8px;background:#f8fbff;color:#174ea6;font-size:13px;font-weight:700;margin-bottom:5px}.frameAcqStats{font-size:12px;line-height:1.5;margin-top:8px;color:#344054;font-variant-numeric:tabular-nums}.calHint{margin:8px 0 10px;padding:8px 10px;background:#f8fbff;border:1px solid #d7e5ff;border-radius:8px;color:#174ea6;font-size:12px;line-height:1.4}.sectionDivider{height:1px;background:#e8edf5;margin:16px 0}
 /* Persistent shared ROI controls; coordinates are always in source-frame pixels. */
 .roiCoordinates{border:1px solid #d7e5ff;background:#f8fbff;border-radius:9px;padding:10px;margin-top:12px}
 .roiCoordinates .roiCoordGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -137,7 +137,7 @@ button,input,select{font:inherit}button{cursor:pointer}
           <div id="liveSavedRoiStatus" class="note">No saved ROI preset.</div>
         </div></div>
       <div class="card"><h2>RGB time profile</h2><div class="channels" id="liveChannels"><label class="ch" style="color:#dc2626"><input type="checkbox" value="r">R</label><label class="ch" style="color:#16a34a"><input type="checkbox" value="g" checked>G</label><label class="ch" style="color:#2563eb"><input type="checkbox" value="b" checked>B</label></div><canvas id="liveChart" class="chart"></canvas><div id="liveProgress" class="progress"></div></div>
-      <div class="card"><h2>Acquisition settings</h2><div class="field"><label>Run name</label><input id="runName" value="Run 001"></div><div class="field"><label>Number of replicates</label><input id="liveReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Minimum time between peaks (s)</label><input id="livePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Analyzed frame interval (s)</label><input id="liveFrameInterval" type="number" value="0.10" min="0.01" step="0.01"></div><h3>Operating mode</h3><label class="inline"><input type="radio" name="liveMode" value="image">Image only</label><label class="inline"><input type="radio" name="liveMode" value="arduino" checked>Image + Arduino Due</label><div class="row" style="margin-top:14px"><button id="startLive" class="btn good" style="flex:1">▶ START</button><button id="stopLive" class="btn stop" style="flex:1">■ STOP</button></div><h3>Washing</h3><div class="washRow"><button id="washReagents" class="btn secondary">💧 Wash reagents</button><button id="washPath" class="btn secondary">↻ Wash flow path</button></div><div id="washMsg" class="note" style="margin-top:7px">Washing commands are sent to Arduino Due over the serial connection.</div><h3>Log</h3><div id="serialLog" class="log"></div><div class="row" style="margin-top:8px"><button id="copySerialMaxima" class="btn secondary" disabled>Copy for Excel</button><button id="clearLog" class="btn secondary">Clear log</button></div></div>
+      <div class="card"><h2>Acquisition settings</h2><div class="field"><label>Run name</label><input id="runName" value="Run 001"></div><div class="field"><label>Number of replicates</label><input id="liveReplicates" type="number" value="5" min="1" step="1"></div><div class="field"><label>Minimum time between peaks (s)</label><input id="livePeakGap" type="number" value="5" min="0" step="0.1"></div><div class="field"><label>Frame acquisition</label><div class="frameAcqMode">All available camera frames</div><div class="note">RGB values are read when a new camera frame is presented (supported browsers). Each measurement keeps its frame timestamp.</div><div id="liveFrameStats" class="frameAcqStats" role="status" aria-live="off">Waiting for acquisition · Frame-synchronized when supported</div></div><h3>Operating mode</h3><label class="inline"><input type="radio" name="liveMode" value="image">Image only</label><label class="inline"><input type="radio" name="liveMode" value="arduino" checked>Image + Arduino Due</label><div class="row" style="margin-top:14px"><button id="startLive" class="btn good" style="flex:1">▶ START</button><button id="stopLive" class="btn stop" style="flex:1">■ STOP</button></div><h3>Washing</h3><div class="washRow"><button id="washReagents" class="btn secondary">💧 Wash reagents</button><button id="washPath" class="btn secondary">↻ Wash flow path</button></div><div id="washMsg" class="note" style="margin-top:7px">Washing commands are sent to Arduino Due over the serial connection.</div><h3>Log</h3><div id="serialLog" class="log"></div><div class="row" style="margin-top:8px"><button id="copySerialMaxima" class="btn secondary" disabled>Copy for Excel</button><button id="clearLog" class="btn secondary">Clear log</button></div></div>
     </div>
   </section>
 
@@ -197,7 +197,7 @@ const waitEvent=(el,name)=>new Promise((resolve,reject)=>{const ok=()=>{cleanup(
 let stream=null,recorder=null,chunks=[],currentVideoBlob=null,serialPort=null,serialReader=null,serialRunning=false,serialBuffer='',currentSerialRep=null,serialRepWindows=[];
 let serialWriteQueue=Promise.resolve(),liveRunMode='image',liveStopping=false,manualStopInFlight=false;
 let serialMaximaReading=false,serialMaxima=[],lastSerialMaxima=[];
-let liveTimer=null,liveStartPerf=0,liveData=[],liveActive=false,liveRoi={x:0,y:0,locked:false,valid:false},reRoi={x:0,y:0,locked:false,valid:false};let liveAutoRoiEnabled=false,liveAutoRoiBest=-Infinity,liveAutoRoiLastScan=0;
+let liveTimer=null,liveFrameCallbackId=null,liveFrameSession=0,liveSamplingMode='video-frame-callback',liveFrameCount=0,liveSkippedPresented=0,liveLastPresentedFrame=null,liveRecentFrameTimes=[],liveLastFrameStatsUpdate=0,liveLastChartDraw=0,liveStartPerf=0,liveData=[],liveActive=false,liveRoi={x:0,y:0,locked:false,valid:false},reRoi={x:0,y:0,locked:false,valid:false};let liveAutoRoiEnabled=false,liveAutoRoiBest=-Infinity,liveAutoRoiLastScan=0;
 let liveAutoBaseline=null,liveAutoRoiFound=false;
 let reAutoRoiEnabled=false,reAutoRoiLastResult=null,reprocessRunActive=false,rePreviewAutoSearching=false,reExpanded=false;
 const AUTO_ROI_MIN_DELTA=1.5;
@@ -629,8 +629,151 @@ function isRepIncluded(rec,p){return !(rec.excludedReplicates||[]).includes(p.re
 function peakSignals(rec,ch){return rec.peaks.filter(p=>isRepIncluded(rec,p)).map(p=>p[ch]).filter(finite)}
 async function startRecorder(){chunks=[];currentVideoBlob=null;if(!stream||!window.MediaRecorder)return;try{recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onstop=()=>{currentVideoBlob=new Blob(chunks,{type:recorder.mimeType||'video/webm'})};recorder.start()}catch(e){log('Video recording unavailable: '+e.message)}}
 async function stopRecorder(){if(!recorder||recorder.state==='inactive')return currentVideoBlob;return await new Promise(resolve=>{const done=()=>setTimeout(()=>resolve(currentVideoBlob),0);recorder.addEventListener('stop',done,{once:true});try{recorder.stop()}catch(e){resolve(currentVideoBlob)}})}
-async function startLiveAcquisition(){if(liveActive||liveStopping)return;if(liveDemoActive)closeRecordedPreview();liveRunMode=mode();if(!stream){await connectCamera();if(!stream)return}if(!liveRoi.valid){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}const channels=channelsFrom('liveChannels');if(!channels.length){alert('Select at least one channel.');return}resetSerialMaxima();liveData=[];serialRepWindows=[];currentSerialRep=null;liveAutoRoiBest=-Infinity;liveAutoRoiLastScan=0;liveAutoRoiFound=false;if(liveAutoRoiEnabled&&!liveRoi.locked){$('liveProgress').textContent='Capturing background image for automatic ROI...';const ok=await captureLiveAutoBaseline($('liveVideo'));if(!ok){alert('Unable to capture a background image for automatic ROI.');return}log('Automatic ROI: background image captured.')}liveActive=true;liveStartPerf=performance.now();$('liveProgress').textContent=liveAutoRoiEnabled&&!liveRoi.locked?'Acquisition in progress — searching for the area with the largest increase in RGB emission...':'Acquisition in progress';await startRecorder();const dt=Math.max(.01,Number($('liveFrameInterval').value)||.1),tick=()=>{if(!liveActive)return;const now=performance.now();if(liveAutoRoiEnabled&&!liveRoi.locked&&now-liveAutoRoiLastScan>=150){liveAutoRoiLastScan=now;if(applyLiveAutoRoiCandidate()){$('liveProgress').textContent=`Automatic ROI active — greatest emission increase detected (ΔRGB ${liveAutoRoiBest.toFixed(1)}).`}}const v=meanRoi($('liveVideo'),liveRoi,roiDiameterFor('live'),channels);if(v){v.t=(performance.now()-liveStartPerf)/1000;liveData.push(v);drawTemporal('liveChart',liveData,channels)}};tick();liveTimer=setInterval(tick,dt*1000);if(liveRunMode==='arduino'){if(!serialPort){log('Arduino not connected. Connect it or use Image only mode.');stopLiveAcquisition(false,false);return}await sleep(150);if(!liveActive)return;try{await sendSerial('START')}catch(e){log(e.message);stopLiveAcquisition(false,false)}}}
-async function stopLiveAcquisition(auto=false,createRecord=true){if(!liveActive||liveStopping)return;liveStopping=true;liveActive=false;try{if(liveTimer){clearInterval(liveTimer);liveTimer=null}const stoppedVideoBlob=await stopRecorder();if(liveAutoRoiEnabled&&!liveRoi.locked){if(liveAutoRoiFound){$('liveProgress').textContent='Run finished — region with the greatest RGB emission increase preserved. Check its position and click “Lock ROI”.';log(`Automatic ROI finished — best ΔRGB = ${liveAutoRoiBest.toFixed(2)}.`)}else{$('liveProgress').textContent='Run finished — insufficient increase in emission to reposition the ROI. Try another positioning run.';log('Automatic ROI: no emission increase above the threshold was detected.')}}else{$('liveProgress').textContent=auto?'Sequence finished automatically':'Acquisition stopped'}if(createRecord&&liveData.length){const channels=channelsFrom('liveChannels'),n=Math.max(1,Number($('liveReplicates').value)||5),gap=Math.max(0,Number($('livePeakGap').value)||5),peaks=detectPeaks(liveData,n,gap,channels,serialRepWindows);addRecord({name:$('runName').value||`Run ${recordId}`,source:'Aquisição',channels,interval:Number($('liveFrameInterval').value),gap,nRep:n,roi:{nx:liveRoi.x/($('liveVideo').videoWidth||1),ny:liveRoi.y/($('liveVideo').videoHeight||1),diameter:roiDiameterFor('live')},data:liveData.map(x=>({...x})),peaks,videoBlob:stoppedVideoBlob});incrementRunName()}}finally{liveStopping=false}}
+// Acquire new camera frames rather than sampling the video element on an arbitrary clock.
+// The callback metadata is tied to the frame presented to the browser. It is not
+// a guarantee of exposure time, a constant camera frame rate, or Arduino timing.
+function updateLiveFrameStats(t,force=false){
+  const now=performance.now();
+  if(!force && now-liveLastFrameStatsUpdate<900)return;
+  liveLastFrameStatsUpdate=now;
+  const recent=liveRecentFrameTimes;
+  const fps=recent.length>1?(recent.length-1)/(recent[recent.length-1]-recent[0]):NaN;
+  const rate=finite(fps)?`${fps.toFixed(1)} effective FPS`:'Measuring FPS...';
+  const modeLabel=liveSamplingMode==='video-frame-callback'?'Frame-synchronized':'Timer fallback (not frame-synchronized)';
+  const missed=liveSamplingMode==='video-frame-callback'?` · ${liveSkippedPresented} skipped presented frame(s)`:'';
+  $('liveFrameStats').textContent=`${modeLabel} · ${liveFrameCount} frame(s) analyzed · ${rate}${missed}`;
+}
+function processLiveFrame(frameTimeMs,metadata=null){
+  if(!liveActive)return;
+  // metadata.presentationTime and performance.now() share a monotonic clock.
+  const eventTime=finite(frameTimeMs)?frameTimeMs:performance.now();
+  if(eventTime<liveStartPerf)return; // Do not attribute a pre-run frame to the run.
+  const v=$('liveVideo');
+  if(liveAutoRoiEnabled&&!liveRoi.locked&&eventTime-liveAutoRoiLastScan>=150){
+    liveAutoRoiLastScan=eventTime;
+    if(applyLiveAutoRoiCandidate()){
+      $('liveProgress').textContent=`Automatic ROI active — greatest emission increase detected (ΔRGB ${liveAutoRoiBest.toFixed(1)}).`;
+    }
+  }
+  const selected=channelsFrom('liveChannels');
+  const reading=meanRoi(v,liveRoi,roiDiameterFor('live'),selected);
+  if(!reading)return;
+  reading.t=(eventTime-liveStartPerf)/1000;
+  liveData.push(reading);
+  liveFrameCount++;
+  if(metadata && finite(metadata.presentedFrames)){
+    if(liveLastPresentedFrame!==null){
+      liveSkippedPresented+=Math.max(0,metadata.presentedFrames-liveLastPresentedFrame-1);
+    }
+    liveLastPresentedFrame=metadata.presentedFrames;
+  }
+  liveRecentFrameTimes.push(reading.t);
+  while(liveRecentFrameTimes.length>2&&reading.t-liveRecentFrameTimes[0]>2)liveRecentFrameTimes.shift();
+  updateLiveFrameStats(reading.t);
+  // Rendering at camera FPS is unnecessarily expensive; collect every frame
+  // but redraw the graph only about seven times per second.
+  if(performance.now()-liveLastChartDraw>=140){
+    liveLastChartDraw=performance.now();
+    drawTemporal('liveChart',liveData,selected);
+  }
+}
+function startLiveFrameCapture(){
+  const video=$('liveVideo');
+  const session=++liveFrameSession;
+  liveFrameCount=0;
+  liveSkippedPresented=0;
+  liveLastPresentedFrame=null;
+  liveRecentFrameTimes=[];
+  liveLastFrameStatsUpdate=0;
+  liveLastChartDraw=0;
+  liveSamplingMode=typeof video.requestVideoFrameCallback==='function'?'video-frame-callback':'timer-fallback';
+  if(liveSamplingMode==='video-frame-callback'){
+    const onFrame=(now,metadata)=>{
+      if(!liveActive||session!==liveFrameSession)return;
+      // Register for the next available video frame immediately. The current
+      // frame is processed below; slow processing may still cause skips.
+      liveFrameCallbackId=video.requestVideoFrameCallback(onFrame);
+      processLiveFrame(finite(metadata?.presentationTime)?metadata.presentationTime:now,metadata);
+    };
+    liveFrameCallbackId=video.requestVideoFrameCallback(onFrame);
+  }else{
+    // Legacy fallback only: this cannot guarantee unique frames.
+    log('Frame callback unsupported; using unsynchronized 50 ms timer fallback.');
+    liveTimer=setInterval(()=>processLiveFrame(performance.now()),50);
+  }
+  $('liveFrameStats').textContent=liveSamplingMode==='video-frame-callback'?'Frame-synchronized · Waiting for camera frames...':'Timer fallback · Camera frame callback unavailable';
+}
+function stopLiveFrameCapture(){
+  ++liveFrameSession; // Invalidate any callback from the old run.
+  const video=$('liveVideo');
+  if(liveFrameCallbackId!==null&&typeof video.cancelVideoFrameCallback==='function'){
+    try{video.cancelVideoFrameCallback(liveFrameCallbackId)}catch(e){}
+  }
+  liveFrameCallbackId=null;
+  if(liveTimer!==null){clearInterval(liveTimer);liveTimer=null}
+  updateLiveFrameStats(liveData.length?liveData[liveData.length-1].t:0,true);
+  drawTemporal('liveChart',liveData,channelsFrom('liveChannels'));
+}
+async function startLiveAcquisition(){
+  if(liveActive||liveStopping)return;
+  if(liveDemoActive)closeRecordedPreview();
+  liveRunMode=mode();
+  if(!stream){await connectCamera();if(!stream)return}
+  if(!liveRoi.valid){centerRoi($('liveVideo'),liveRoi);drawRoi($('liveVideo'),$('liveOverlay'),liveRoi)}
+  const channels=channelsFrom('liveChannels');
+  if(!channels.length){alert('Select at least one channel.');return}
+  resetSerialMaxima();
+  liveData=[];serialRepWindows=[];currentSerialRep=null;
+  liveAutoRoiBest=-Infinity;liveAutoRoiLastScan=0;liveAutoRoiFound=false;
+  if(liveAutoRoiEnabled&&!liveRoi.locked){
+    $('liveProgress').textContent='Capturing background image for automatic ROI...';
+    const ok=await captureLiveAutoBaseline($('liveVideo'));
+    if(!ok){alert('Unable to capture a background image for automatic ROI.');return}
+    log('Automatic ROI: background image captured.');
+  }
+  liveActive=true;
+  liveStartPerf=performance.now();
+  $('liveProgress').textContent=liveAutoRoiEnabled&&!liveRoi.locked?'Acquisition in progress — searching for the area with the largest increase in RGB emission...':'Acquisition in progress';
+  await startRecorder();
+  if(!liveActive)return;
+  startLiveFrameCapture();
+  if(liveRunMode==='arduino'){
+    if(!serialPort){log('Arduino not connected. Connect it or use Image only mode.');await stopLiveAcquisition(false,false);return}
+    await sleep(150);
+    if(!liveActive)return;
+    try{await sendSerial('START')}catch(e){log(e.message);await stopLiveAcquisition(false,false)}
+  }
+}
+async function stopLiveAcquisition(auto=false,createRecord=true){
+  if(!liveActive||liveStopping)return;
+  liveStopping=true;
+  liveActive=false;
+  try{
+    stopLiveFrameCapture();
+    const stoppedVideoBlob=await stopRecorder();
+    if(liveAutoRoiEnabled&&!liveRoi.locked){
+      if(liveAutoRoiFound){
+        $('liveProgress').textContent='Run finished — region with the greatest RGB emission increase preserved. Check its position and click “Lock ROI”.';
+        log(`Automatic ROI finished — best ΔRGB = ${liveAutoRoiBest.toFixed(2)}.`);
+      }else{
+        $('liveProgress').textContent='Run finished — insufficient increase in emission to reposition the ROI. Try another positioning run.';
+        log('Automatic ROI: no emission increase above the threshold was detected.');
+      }
+    }else $('liveProgress').textContent=auto?'Sequence finished automatically':'Acquisition stopped';
+    if(createRecord&&liveData.length){
+      const channels=channelsFrom('liveChannels'),n=Math.max(1,Number($('liveReplicates').value)||5),gap=Math.max(0,Number($('livePeakGap').value)||5);
+      const peaks=detectPeaks(liveData,n,gap,channels,serialRepWindows);
+      addRecord({
+        name:$('runName').value||`Run ${recordId}`,source:'Aquisição',channels,
+        interval:NaN,samplingMode:liveSamplingMode,framesAnalyzed:liveFrameCount,skippedPresentedFrames:liveSkippedPresented,
+        gap,nRep:n,
+        roi:{nx:liveRoi.x/($('liveVideo').videoWidth||1),ny:liveRoi.y/($('liveVideo').videoHeight||1),diameter:roiDiameterFor('live')},
+        data:liveData.map(x=>({...x})),peaks,videoBlob:stoppedVideoBlob
+      });
+      incrementRunName();
+    }
+  }finally{liveStopping=false}
+}
 function incrementRunName(){const s=$('runName').value,m=s.match(/^(.*?)(\d+)$/);$('runName').value=m?m[1]+String(Number(m[2])+1).padStart(m[2].length,'0'):`Run ${String(recordId).padStart(3,'0')}`}// Stop locally immediately AND ask Arduino Due to interrupt its analytical sequence.
 // The firmware must handle STOP during execution; the browser cannot force it to do so.
 async function requestManualStop(){
@@ -1135,7 +1278,7 @@ $('exportSummary').onclick=()=>{
   });
   downloadText(lines.join('\n'),'CL_RGB_summary.csv');
 };
-$('exportFull').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Select at least one record.');return}const lines=['CL RGB Analyzer - complete export'];list.forEach(r=>{lines.push('',`RECORD;${csvCell(r.name)}`,`source;${csvCell(r.source)}`,`classification;${csvCell(r.classification)}`,`frame_interval_s;${fmtDot(r.interval)}`,`minimum_peak_gap_s;${fmtDot(r.gap)}`,`number_of_replicates;${r.nRep}`,`roi_nx;${fmtDot(r.roi.nx)}`,`roi_ny;${fmtDot(r.roi.ny)}`,`roi_diameter_px;${r.roi.diameter}`);if(r.classification==='standard'&&r.calibrationSaved)lines.push(`standard_concentration;${fmtDot(r.concentration)}`,`unit;${csvCell(r.unit)}`);lines.push('TIME SERIES','time_s;R_mean;G_mean;B_mean');r.data.forEach(d=>lines.push(`${fmtDot(d.t)};${fmtDot(d.r)};${fmtDot(d.g)};${fmtDot(d.b)}`));lines.push('MAXIMA BY REPLICATE','replicate;included_in_calculations;time_R;R_max;time_G;G_max;time_B;B_max');r.peaks.forEach(p=>lines.push(`${p.rep};${isRepIncluded(r,p)?1:0};${fmtDot(p.tr)};${fmtDot(p.r)};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const reg=regression(ch);if(reg.ok)lines.push(`CALIBRATION_${ch.toUpperCase()};slope=${fmtDot(reg.slope)};intercept=${fmtDot(reg.intercept)};R2=${fmtDot(reg.r2)};Syx=${fmtDot(reg.syx)};LD=${fmtDot(reg.lod)};LQ=${fmtDot(reg.loq)};unidade=${csvCell(reg.unit)}`)})});downloadText(lines.join('\n'),'CL_RGB_resultados_completos.csv')};
+$('exportFull').onclick=()=>{const list=selectedForExport();if(!list.length){alert('Select at least one record.');return}const lines=['CL RGB Analyzer - complete export'];list.forEach(r=>{lines.push('',`RECORD;${csvCell(r.name)}`,`source;${csvCell(r.source)}`,`classification;${csvCell(r.classification)}`,`frame_interval_s;${fmtDot(r.interval)}`,`acquisition_sampling_mode;${r.samplingMode||'fixed-interval-reprocessing'}`,`frames_analyzed;${r.framesAnalyzed??''}`,`skipped_presented_frames;${r.skippedPresentedFrames??''}`,`minimum_peak_gap_s;${fmtDot(r.gap)}`,`number_of_replicates;${r.nRep}`,`roi_nx;${fmtDot(r.roi.nx)}`,`roi_ny;${fmtDot(r.roi.ny)}`,`roi_diameter_px;${r.roi.diameter}`);if(r.classification==='standard'&&r.calibrationSaved)lines.push(`standard_concentration;${fmtDot(r.concentration)}`,`unit;${csvCell(r.unit)}`);lines.push('TIME SERIES','time_s;R_mean;G_mean;B_mean');r.data.forEach(d=>lines.push(`${fmtDot(d.t)};${fmtDot(d.r)};${fmtDot(d.g)};${fmtDot(d.b)}`));lines.push('MAXIMA BY REPLICATE','replicate;included_in_calculations;time_R;R_max;time_G;G_max;time_B;B_max');r.peaks.forEach(p=>lines.push(`${p.rep};${isRepIncluded(r,p)?1:0};${fmtDot(p.tr)};${fmtDot(p.r)};${fmtDot(p.tg)};${fmtDot(p.g)};${fmtDot(p.tb)};${fmtDot(p.b)}`));['r','g','b'].filter(ch=>r.channels.includes(ch)).forEach(ch=>{const reg=regression(ch);if(reg.ok)lines.push(`CALIBRATION_${ch.toUpperCase()};slope=${fmtDot(reg.slope)};intercept=${fmtDot(reg.intercept)};R2=${fmtDot(reg.r2)};Syx=${fmtDot(reg.syx)};LD=${fmtDot(reg.lod)};LQ=${fmtDot(reg.loq)};unidade=${csvCell(reg.unit)}`)})});downloadText(lines.join('\n'),'CL_RGB_resultados_completos.csv')};
 updateRoiControls();drawTemporal('liveChart',[],['g','b']);displaySelectedReprocessingProfile();renderRecords();
 </script>
 </body>
